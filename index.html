@@ -4,41 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">SISTEMA DE VOTAÇÃO MESA</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
+        :root { --hacker-green: #00ff41; }
+        
         body {
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
             min-height: 100vh;
             margin: 0;
             padding-top: 20px;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            overflow-x: hidden;
         }
 
         h1 {
             font-family: "Times New Roman", Times, serif;
             text-transform: uppercase;
             color: #333;
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
 
-        .btn-controlz {
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            background-color: #ffc107;
-            color: black;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1rem;
-            margin-bottom: 20px;
+        /* Barra de Aproveitamento (O Diferencial) */
+        .progress-container {
+            width: 80%;
+            max-width: 500px;
+            background: #ddd;
+            height: 25px;
+            border-radius: 50px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            border: 2px solid #333;
+        }
+        #progressBar {
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #28a745, #00ff41);
+            transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .stats-box {
@@ -47,202 +54,211 @@
             padding: 20px;
             width: 80%;
             max-width: 500px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
             margin-bottom: 30px;
+            border-left: 5px solid #007bff;
         }
-
-        .main-stats { font-size: 1.3rem; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
-        .sub-stats { font-size: 1rem; color: #555; line-height: 1.6; }
 
         .voting-area { display: flex; gap: 40px; }
 
         .vote-card {
             background: white;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             text-align: center;
             cursor: pointer;
-            transition: transform 0.2s;
-            width: 200px;
+            transition: all 0.3s ease;
+            width: 220px;
         }
 
-        .vote-card:hover { transform: scale(1.05); }
-        .vote-card img { width: 150px; height: 150px; object-fit: contain; }
-        .vote-card p { font-weight: bold; margin-top: 15px; font-size: 1.2rem; }
+        .vote-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        .vote-card img { width: 160px; height: 160px; object-fit: contain; }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            z-index: 3000;
-            text-align: center;
-            width: 350px;
+        /* PAINEL HACKER SUPREMO */
+        #adminPanel { 
+            background: rgba(0, 0, 0, 0.95);
+            color: var(--hacker-green);
+            border: 2px solid var(--hacker-green);
+            font-family: 'Courier New', monospace;
+            width: 500px;
+            z-index: 5000;
         }
 
-        .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .modal-buttons button { padding: 12px; border: none; border-radius: 5px; background: #eee; cursor: pointer; font-weight: bold; }
+        canvas#matrix {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
 
-        /* Estilo do Painel Admin */
-        #adminPanel { border: 3px solid #333; width: 400px; }
-        .admin-option { margin-bottom: 15px; text-align: left; border-top: 1px solid #eee; padding-top: 10px; }
-        .admin-option label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
-        .admin-option input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        /* Efeito de Tremer (Shake) */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(-1deg); }
+            40% { transform: translate(3px, 2px) rotate(1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .btn-controlz { background: #ffc107; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         
-        .close-admin { background: #ff4444; color: white; border: none; padding: 8px 15px; float: right; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.5); text-align: center; }
     </style>
 </head>
-<body>
+<body id="mainBody">
 
     <h1 id="mainDisplayTitle">MESA - CORRETO OU ERRADO?</h1>
+    
+    <button class="btn-controlz" onclick="undo()">↩️ REVERTER ÚLTIMO VOTO (CTRL+Z)</button>
 
-    <button class="btn-controlz" onclick="undo()">↩️ Control Z</button>
+    <div class="progress-container">
+        <div id="progressBar"></div>
+    </div>
+    <div style="font-weight: bold; margin-bottom: 20px;">Aproveitamento: <span id="percentText">0%</span></div>
 
     <div class="stats-box">
-        <div class="main-stats">
-            ✅ Sim: <span id="s-sim">0</span> | ❌ Não: <span id="s-nao">0</span>
+        <div style="font-size: 1.5rem; margin-bottom: 10px;">
+            ✅ <span id="s-sim">0</span> | ❌ <span id="s-nao">0</span>
         </div>
-        <div class="sub-stats">
-            Montagem: <span id="s-montagem">0</span> | Programação: <span id="s-programacao">0</span><br>
-            Variação: <span id="s-variacao">0</span> | Soltagem: <span id="s-soltagem">0</span>
+        <div style="color: #666; font-size: 0.9rem;">
+            PRG: <span id="s-programacao">0</span> | MON: <span id="s-montagem">0</span> | VAR: <span id="s-variacao">0</span> | SOL: <span id="s-soltagem">0</span>
         </div>
     </div>
 
     <div class="voting-area">
         <div class="vote-card" onclick="votarSim()">
-            <img src="like.png" alt="Correto">
-            <p>CORRETO</p>
+            <img src="like.png">
+            <p style="font-size: 1.4rem; font-weight: bold;">CORRETO</p>
         </div>
         <div class="vote-card" onclick="mostrarMotivos()">
-            <img src="6323-dislikebs.png" alt="Errado">
-            <p>ERRADO</p>
+            <img src="6323-dislikebs.png">
+            <p style="font-size: 1.4rem; font-weight: bold;">ERRADO</p>
         </div>
     </div>
 
-    <div id="modalMotivos" class="modal">
-        <img src="2e82eda13b1ad2f508a6651858124034.png" style="width: 100%; border-radius: 10px; margin-bottom: 10px;">
-        <h3>QUAL O MOTIVO?</h3>
-        <div class="modal-buttons">
-            <button onclick="votarNao('programacao')">Programação</button>
-            <button onclick="votarNao('montagem')">Montagem</button>
-            <button onclick="votarNao('variacao')">Variação</button>
-            <button onclick="votarNao('soltagem')">Soltagem</button>
+    <div id="modalMotivos" class="modal" style="background: white; width: 400px; color: black;">
+        <img src="2e82eda13b1ad2f508a6651858124034.png" style="width: 100%; border-radius: 10px;">
+        <h3 style="font-family: Arial;">REPORTAR FALHA TÉCNICA</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button onclick="votarNao('programacao')" style="padding:15px; cursor:pointer;">Programação</button>
+            <button onclick="votarNao('montagem')" style="padding:15px; cursor:pointer;">Montagem</button>
+            <button onclick="votarNao('variacao')" style="padding:15px; cursor:pointer;">Variação</button>
+            <button onclick="votarNao('soltagem')" style="padding:15px; cursor:pointer;">Soltagem</button>
         </div>
-        <button onclick="fecharModal()" style="margin-top: 15px; background: none; border: none; color: blue; cursor: pointer;">Cancelar</button>
+        <button onclick="document.getElementById('modalMotivos').style.display='none'" style="margin-top:20px; border:none; background:none; color:red; cursor:pointer;">CANCELAR</button>
     </div>
 
     <div id="adminPanel" class="modal">
-        <button class="close-admin" onclick="fecharAdmin()">SAIR</button>
-        <img src="hacker options sigma.png" style="width: 60px; margin-top: 10px;">
-        <h3>PAINEL HACKER</h3>
-        
-        <div class="admin-option">
-            <label>RENOMEAR PÁGINA:</label>
-            <input type="text" id="newTitleInput" placeholder="Digite o novo título..." oninput="changeTitle(this.value)">
+        <canvas id="matrix"></canvas>
+        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer;">[X] CLOSE_ROOT</button>
+        <h3>> DATABASE_OVERRIDE_V2</h3>
+        <div style="text-align: left; padding: 10px;">
+            <label>SYSTEM_LABEL:</label><br>
+            <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="width:100%; background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green);"><br><br>
+            <label>COLOR_HEX_CODE:</label><br>
+            <input type="color" id="colorWheel" oninput="changeBgColor(this.value)" style="width:100%; cursor:pointer;">
         </div>
-
-        <div class="admin-option">
-            <label>COR DE FUNDO (HEX):</label>
-            <input type="text" id="bgColorInput" placeholder="#f0f0f0" oninput="changeBgColor(this.value)">
-        </div>
-
-        <button onclick="resetarTudo()" style="background: black; color: white; width: 100%; padding: 12px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">ZERAR TODOS OS VOTOS</button>
+        <button onclick="resetarTudo()" style="width:100%; padding:10px; background:var(--hacker-green); color:black; font-weight:bold; cursor:pointer; border:none;">PURGE_ALL_DATA (Zerar)</button>
     </div>
 
     <script>
-        // Carregar dados ou iniciar do zero
-        let dados = JSON.parse(localStorage.getItem('mesa_dados')) || { 
+        let dados = JSON.parse(localStorage.getItem('mesa_dados_v2')) || { 
             sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
-            titulo: "MESA - CORRETO OU ERRADO?",
-            corFundo: "#f0f0f0"
+            titulo: "MESA - CORRETO OU ERRADO?", corFundo: "#f0f0f0"
         };
-        
         let historico = [];
 
-        function salvarDados() {
-            localStorage.setItem('mesa_dados', JSON.stringify(dados));
-            atualizarInterface();
+        function salvar() {
+            localStorage.setItem('mesa_dados_v2', JSON.stringify(dados));
+            atualizar();
         }
 
-        function atualizarInterface() {
+        function atualizar() {
             document.getElementById('s-sim').innerText = dados.sim;
             document.getElementById('s-nao').innerText = dados.nao;
             document.getElementById('s-programacao').innerText = dados.programacao;
             document.getElementById('s-montagem').innerText = dados.montagem;
             document.getElementById('s-variacao').innerText = dados.variacao;
             document.getElementById('s-soltagem').innerText = dados.soltagem;
-            
             document.getElementById('mainDisplayTitle').innerText = dados.titulo;
-            document.getElementById('pageTitle').innerText = dados.titulo;
             document.body.style.backgroundColor = dados.corFundo;
+
+            let total = dados.sim + dados.nao;
+            let perc = total === 0 ? 0 : Math.round((dados.sim / total) * 100);
+            document.getElementById('progressBar').style.width = perc + "%";
+            document.getElementById('percentText').innerText = perc + "%";
         }
 
         function votarSim() {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             dados.sim++;
             historico.push('sim');
-            salvarDados();
+            salvar();
         }
 
         function mostrarMotivos() { document.getElementById('modalMotivos').style.display = 'block'; }
-        function fecharModal() { document.getElementById('modalMotivos').style.display = 'none'; }
 
         function votarNao(motivo) {
+            document.body.style.animation = "shake 0.3s";
+            setTimeout(() => document.body.style.animation = "", 300);
             dados.nao++;
             dados[motivo]++;
             historico.push(motivo);
-            fecharModal();
-            salvarDados();
+            document.getElementById('modalMotivos').style.display = 'none';
+            salvar();
         }
 
         function undo() {
-            let ultimo = historico.pop();
-            if (!ultimo) return;
-            if (ultimo === 'sim') { dados.sim--; } 
-            else { dados.nao--; dados[ultimo]--; }
-            salvarDados();
+            let u = historico.pop();
+            if(!u) return;
+            if(u === 'sim') dados.sim--; else { dados.nao--; dados[u]--; }
+            salvar();
         }
 
-        // Funções do Painel Hacker
-        function changeTitle(val) {
-            dados.titulo = val || "MESA - CORRETO OU ERRADO?";
-            salvarDados();
-        }
-
-        function changeBgColor(val) {
-            if(val.length >= 4) {
-                dados.corFundo = val;
-                salvarDados();
-            }
-        }
-
+        function changeTitle(v) { dados.titulo = v; salvar(); }
+        function changeBgColor(v) { dados.corFundo = v; salvar(); }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
-        function resetarTudo() {
-            if(confirm("Deseja apagar TUDO?")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
+        function resetarTudo() { if(confirm("NUCLEAR_WIPE?")) { localStorage.clear(); location.reload(); } }
 
-        let segredo = "";
+        // Código Secreto e Atalhos
+        let s = "";
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
-            segredo += e.key.toLowerCase();
-            if (segredo.includes("harryblocks") || segredo.includes("harry blocks")) {
+            if(e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+            s += e.key.toLowerCase();
+            if(s.includes("harryblocks") || s.includes("harry blocks")) {
                 document.getElementById('adminPanel').style.display = 'block';
-                segredo = "";
+                startMatrix();
+                s = "";
             }
-            if (segredo.length > 20) segredo = "";
         });
 
-        // Inicializa a tela com os dados salvos
-        atualizarInterface();
+        // Efeito Matrix (Diferencial de Programador)
+        function startMatrix() {
+            const canvas = document.getElementById('matrix');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 500; canvas.height = 400;
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            const fontSize = 10;
+            const columns = canvas.width / fontSize;
+            const drops = Array(Math.floor(columns)).fill(1);
+            function draw() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#0F0";
+                ctx.font = fontSize + "px arial";
+                for(let i = 0; i < drops.length; i++) {
+                    const text = letters[Math.floor(Math.random() * letters.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+            }
+            setInterval(draw, 33);
+        }
+
+        atualizar();
     </script>
 </body>
 </html>
