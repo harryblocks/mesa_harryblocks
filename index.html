@@ -3,199 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA DE VOTAÇÃO</title>
+    <title>SISTEMA DE VOTAÇÃO MESA</title>
     <style>
         body {
             background-color: #f0f0f0;
-            font-family: "Times New Roman", Times, serif;
+            font-family: Arial, sans-serif; /* Fonte padrão Arial */
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            justify-content: flex-start;
+            min-height: 100vh;
             margin: 0;
-            overflow: hidden;
+            padding-top: 20px;
         }
 
         h1 {
+            font-family: "Times New Roman", Times, serif; /* Apenas título em Times */
             text-transform: uppercase;
             color: #333;
-            font-size: 3rem;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* Botões de Ação Topo */
+        .top-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn-top {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-resultados { background-color: #007bff; }
+        .btn-controlz { background-color: #ffc107; color: black; }
+
+        /* Painel de Estatísticas Centralizado como na foto */
+        .stats-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
             margin-bottom: 30px;
         }
 
-        .container {
+        .stats-box h2 { font-size: 1.2rem; margin-top: 0; }
+        .main-stats { font-size: 1.3rem; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .sub-stats { font-size: 1rem; color: #555; }
+
+        /* Cards de Votação Grandes */
+        .voting-area {
+            display: flex;
+            gap: 40px;
+        }
+
+        .vote-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 200px;
+        }
+
+        .vote-card:hover { transform: scale(1.05); }
+        .vote-card img { width: 150px; height: 150px; object-fit: contain; }
+        .vote-card p { font-weight: bold; margin-top: 15px; font-size: 1.2rem; }
+
+        /* Modais */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: white;
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            z-index: 3000;
             text-align: center;
+            width: 350px;
         }
 
-        .options {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-
-        .card {
+        .modal h3 { margin-top: 0; }
+        .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .modal-buttons button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            background: #eee;
             cursor: pointer;
-            transition: transform 0.2s;
-            border: 2px solid transparent;
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .card:hover {
-            transform: scale(1.1);
-            border-color: #ddd;
-        }
-
-        .card img {
-            width: 150px;
-            height: 150px;
-            object-fit: contain;
-        }
-
-        .counter {
-            font-size: 1.5rem;
             font-weight: bold;
-            margin-top: 10px;
         }
+        .modal-buttons button:hover { background: #ddd; }
 
-        /* Modal de Motivos */
-        #modalErro {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border: 2px solid red;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-            z-index: 2000;
-            text-align: center;
-        }
-
-        /* Painel de Admin */
+        /* Admin Panel */
         #adminPanel {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #ffffff;
-            border: 3px solid #333;
-            padding: 30px;
-            z-index: 1000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            min-width: 300px;
+            background: #fff;
+            border: 2px solid #333;
         }
-
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        .close-admin {
             background: #ff4444;
             color: white;
             border: none;
-            border-radius: 5px;
             padding: 5px 10px;
+            float: right;
             cursor: pointer;
-            font-weight: bold;
+            border-radius: 5px;
         }
-
-        .admin-title { font-weight: bold; text-decoration: underline; margin-bottom: 20px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h1>SISTEMA DE VOTAÇÃO</h1>
+    <h1>MESA - CORRETO OU ERRADO?</h1>
 
-    <div class="container">
-        <div class="options">
-            <div class="card" onclick="votar('correto')">
-                <img src="like.png" alt="Correto">
-                <div class="counter">CORRETO: <span id="countCorreto">0</span></div>
-            </div>
-            
-            <div class="card" onclick="abrirMotivos()">
-                <img src="6323-dislikebs.png" alt="Errado">
-                <div class="counter">ERRADO: <span id="countErrado">0</span></div>
-            </div>
+    <div class="top-buttons">
+        <button class="btn-top btn-resultados" onclick="abrirAdmin()">📊 Resultados</button>
+        <button class="btn-top btn-controlz" onclick="undo()">↩️ Control Z</button>
+    </div>
+
+    <div class="stats-box">
+        <h2>Estatísticas</h2>
+        <div class="main-stats">
+            ✅ Sim: <span id="s-sim">0</span> | ❌ Não: <span id="s-nao">0</span>
+        </div>
+        <div class="sub-stats">
+            Montagem: <span id="s-montagem">0</span> | Programação: <span id="s-programacao">0</span><br>
+            Variação: <span id="s-variacao">0</span> | Soltagem: <span id="s-soltagem">0</span>
         </div>
     </div>
 
-    <div id="modalErro">
-        <img src="2e82eda13b1ad2f508a6651858124034.png" style="width: 250px; margin-bottom: 10px;">
-        <h3>POR QUE ESTÁ ERRADO?</h3>
-        <button onclick="confirmarErro('Mesa torta')">Mesa torta</button>
-        <button onclick="confirmarErro('Falta peça')">Falta peça</button>
-        <button onclick="confirmarErro('Cor errada')">Cor errada</button>
+    <div class="voting-area">
+        <div class="vote-card" onclick="votarSim()">
+            <img src="like.png" alt="Correto">
+            <p>CORRETO</p>
+        </div>
+
+        <div class="vote-card" onclick="mostrarMotivos()">
+            <img src="6323-dislikebs.png" alt="Errado">
+            <p>ERRADO</p>
+        </div>
     </div>
 
-    <div id="adminPanel">
-        <button class="close-btn" onclick="fecharPainel()">X</button>
-        <img src="hacker options sigma.png" style="width: 80px; display: block; margin: 0 auto;">
-        <div class="admin-title">PAINEL DE ADMINISTRAÇÃO</div>
-        <p>Positivos: <span id="adminCorreto">0</span></p>
-        <p>Negativos: <span id="adminErrado">0</span></p>
-        <button onclick="resetarVotos()" style="width: 100%;">RESETAR TUDO</button>
+    <div id="modalMotivos" class="modal">
+        <img src="2e82eda13b1ad2f508a6651858124034.png" style="width: 100%; border-radius: 10px; margin-bottom: 10px;">
+        <h3>QUAL O MOTIVO?</h3>
+        <div class="modal-buttons">
+            <button onclick="votarNao('programacao')">Programação</button>
+            <button onclick="votarNao('montagem')">Montagem</button>
+            <button onclick="votarNao('variacao')">Variação</button>
+            <button onclick="votarNao('soltagem')">Soltagem</button>
+        </div>
+        <button onclick="fecharModal()" style="margin-top: 15px; background: none; border: none; color: blue; cursor: pointer;">Cancelar</button>
+    </div>
+
+    <div id="adminPanel" class="modal">
+        <button class="close-admin" onclick="fecharAdmin()">SAIR</button>
+        <img src="hacker options sigma.png" style="width: 60px; margin-bottom: 10px;">
+        <h3>PAINEL ADMIN</h3>
+        <div id="resumoAdmin" style="text-align: left; font-size: 0.9rem; margin-bottom: 15px;"></div>
+        <button onclick="resetarTudo()" style="background: black; color: white; width: 100%; padding: 10px; cursor: pointer;">RESETAR DADOS</button>
     </div>
 
     <script>
-        let votos = { correto: 0, errado: 0 };
+        // Estado inicial
+        let dados = {
+            sim: 0,
+            nao: 0,
+            programacao: 0,
+            montagem: 0,
+            variacao: 0,
+            soltagem: 0
+        };
+
         let historico = [];
 
-        function votar(tipo) {
-            votos[tipo]++;
-            historico.push(tipo);
-            atualizarTela();
+        function atualizarInterface() {
+            document.getElementById('s-sim').innerText = dados.sim;
+            document.getElementById('s-nao').innerText = dados.nao;
+            document.getElementById('s-programacao').innerText = dados.programacao;
+            document.getElementById('s-montagem').innerText = dados.montagem;
+            document.getElementById('s-variacao').innerText = dados.variacao;
+            document.getElementById('s-soltagem').innerText = dados.soltagem;
+            
+            // Atualiza texto do admin
+            document.getElementById('resumoAdmin').innerHTML = `
+                <b>Total Sim:</b> ${dados.sim}<br>
+                <b>Total Não:</b> ${dados.nao}<br><br>
+                <b>Programação:</b> ${dados.programacao}<br>
+                <b>Montagem:</b> ${dados.montagem}<br>
+                <b>Variação:</b> ${dados.variacao}<br>
+                <b>Soltagem:</b> ${dados.soltagem}
+            `;
         }
 
-        function abrirMotivos() {
-            document.getElementById('modalErro').style.display = 'block';
+        function votarSim() {
+            dados.sim++;
+            historico.push('sim');
+            atualizarInterface();
         }
 
-        function confirmarErro(motivo) {
-            votar('errado');
-            console.log("Motivo registrado: " + motivo);
-            document.getElementById('modalErro').style.display = 'none';
+        function mostrarMotivos() {
+            document.getElementById('modalMotivos').style.display = 'block';
         }
 
-        function atualizarTela() {
-            document.getElementById('countCorreto').innerText = votos.correto;
-            document.getElementById('countErrado').innerText = votos.errado;
-            document.getElementById('adminCorreto').innerText = votos.correto;
-            document.getElementById('adminErrado').innerText = votos.errado;
+        function votarNao(motivo) {
+            dados.nao++;
+            dados[motivo]++;
+            historico.push(motivo);
+            fecharModal();
+            atualizarInterface();
         }
 
-        function fecharPainel() { document.getElementById('adminPanel').style.display = 'none'; }
+        function undo() {
+            let ultimo = historico.pop();
+            if (!ultimo) return;
+
+            if (ultimo === 'sim') {
+                dados.sim--;
+            } else {
+                dados.nao--;
+                dados[ultimo]--;
+            }
+            atualizarInterface();
+        }
+
+        function fecharModal() { document.getElementById('modalMotivos').style.display = 'none'; }
         
-        function resetarVotos() { 
-            if(confirm("Zerar tudo?")) { votos = {correto:0, errado:0}; historico = []; atualizarTela(); } 
+        function abrirAdmin() { document.getElementById('adminPanel').style.display = 'block'; }
+        function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+
+        function resetarTudo() {
+            if(confirm("Deseja zerar todos os votos?")) {
+                dados = { sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0 };
+                historico = [];
+                atualizarInterface();
+            }
         }
 
-        // CONTROL + Z e CÓDIGO SECRETO
-        let sequence = "";
+        // Detector de código "harry blocks" e Atalhos
+        let combo = "";
         document.addEventListener('keydown', (e) => {
-            // Control + Z
+            // Control + Z atalho
             if (e.ctrlKey && e.key === 'z') {
-                let ultimo = historico.pop();
-                if (ultimo) {
-                    votos[ultimo]--;
-                    atualizarTela();
-                }
+                e.preventDefault();
+                undo();
             }
 
-            // Código harryblocks
-            sequence += e.key.toLowerCase();
-            if (sequence.includes("harryblocks")) {
-                document.getElementById('adminPanel').style.display = 'block';
-                sequence = "";
+            // Segredo "harry blocks"
+            combo += e.key.toLowerCase();
+            if (combo.includes("harryblocks") || combo.includes("harry blocks")) {
+                abrirAdmin();
+                combo = "";
             }
-            if (sequence.length > 20) sequence = "";
+            if (combo.length > 20) combo = "";
         });
     </script>
 </body>
