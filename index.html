@@ -32,6 +32,8 @@
             color: #333;
             font-size: 1.8rem;
             margin-bottom: 5px;
+            cursor: pointer; /* Adicionado para o novo método de clique */
+            user-select: none;
         }
 
         .progress-container {
@@ -90,21 +92,22 @@
         .vote-card img { width: 100px; height: 100px; object-fit: contain; }
         .vote-card p { font-weight: bold; margin-top: 10px; font-size: 0.9rem; }
 
+        /* PAINEL HACKER - CORREÇÃO DE Z-INDEX E DISPLAY */
         #adminPanel { 
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.98);
             color: var(--hacker-green);
-            border: 2px solid var(--hacker-green);
+            border: 3px solid var(--hacker-green);
             font-family: 'Courier New', monospace;
             width: 400px;
-            z-index: 5000;
+            z-index: 10000; /* Super alto para garantir visibilidade */
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 30px var(--hacker-green);
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.5);
         }
 
         .hacker-img {
@@ -162,7 +165,7 @@
         <video id="videoElement"></video>
     </div>
 
-    <h1 id="mainDisplayTitle">MESA - CORRETO OU ERRADO?</h1>
+    <h1 id="mainDisplayTitle" onclick="clickAdmin()">MESA - CORRETO OU ERRADO?</h1>
     
     <button style="background:#ffc107; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:bold; font-size: 0.7rem;" onclick="undo()">↩️ DESFAZER (CTRL+Z)</button>
 
@@ -199,9 +202,9 @@
     <div id="adminPanel">
         <canvas id="matrix"></canvas>
         <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer; padding:5px; border-radius:3px; font-weight:bold;">X</button>
-        <h3 style="margin-top:0">>_ SISTEMA_ADMIN</h3>
+        <h3 style="margin-top:0">>_ ACESSO_ROOT</h3>
         
-        <img src="hacker-sigma.png" alt="Hacker Sigma" class="hacker-img" onerror="this.src='https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/YQitE4YNQNahy/giphy.gif'">
+        <img src="hacker-sigma.png" alt="Hacker Sigma" class="hacker-img" onerror="this.src='https://media.giphy.com/media/YQitE4YNQNahy/giphy.gif'">
         
         <div style="text-align: left;">
             <label style="font-size: 0.7rem;">NOME DA PÁGINA:</label>
@@ -233,6 +236,7 @@
         };
         let historico = [];
         let inputBuffer = "";
+        let clickCount = 0;
 
         function salvar() {
             localStorage.setItem('mesa_final_v3', JSON.stringify(dados));
@@ -251,9 +255,23 @@
 
             let total = dados.sim + dados.nao;
             let perc = total === 0 ? 0 : Math.round((dados.sim / total) * 100);
-            const bar = document.getElementById('progressBar');
-            bar.style.width = perc + "%";
+            document.getElementById('progressBar').style.width = perc + "%";
             document.getElementById('percentText').innerText = perc + "%";
+        }
+
+        // Método de segurança: Clique 5 vezes no título para abrir o Admin
+        function clickAdmin() {
+            clickCount++;
+            if(clickCount >= 5) {
+                abrirAdmin();
+                clickCount = 0;
+            }
+            setTimeout(() => clickCount = 0, 2000); // Reseta se demorar a clicar
+        }
+
+        function abrirAdmin() {
+            document.getElementById('adminPanel').style.display = 'block';
+            startMatrix();
         }
 
         function votarSim() {
@@ -288,18 +306,19 @@
         function changeBgColor(v) { dados.corFundo = v; salvar(); }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
 
+        // MONITORAMENTO DE TECLADO REFORÇADO
         document.addEventListener('keydown', (e) => {
             if(e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
             
             inputBuffer += e.key.toLowerCase();
-            if(inputBuffer.length > 20) inputBuffer = inputBuffer.substring(1);
+            if(inputBuffer.length > 30) inputBuffer = inputBuffer.substring(1);
 
             if(inputBuffer.endsWith("67")) { playMedia("67.mp4"); inputBuffer = ""; }
             if(inputBuffer.endsWith("mustard")) { playMedia("mustardtuff.mp4"); inputBuffer = ""; }
             
+            // Verifica se a palavra está contida no buffer
             if(inputBuffer.includes("harryblocks")) {
-                document.getElementById('adminPanel').style.display = 'block';
-                startMatrix();
+                abrirAdmin();
                 inputBuffer = "";
             }
         });
@@ -310,19 +329,18 @@
             overlay.style.display = 'block';
             video.src = file;
             video.play().catch(e => console.log("Erro: ", e));
-            
             video.onended = () => { overlay.style.display = 'none'; video.src = ""; };
             overlay.onclick = () => { overlay.style.display = 'none'; video.pause(); video.src = ""; };
         }
 
-        function resetarTudo() { if(confirm("REINICIAR SISTEMA?")) { localStorage.clear(); location.reload(); } }
+        function resetarTudo() { if(confirm("DESEJA ZERAR TUDO?")) { localStorage.clear(); location.reload(); } }
 
         let matrixInterval;
         function startMatrix() {
             const canvas = document.getElementById('matrix');
             const ctx = canvas.getContext('2d');
             canvas.width = 400; canvas.height = 400;
-            const letters = "010101HACKER";
+            const letters = "01HACKER";
             const fontSize = 10;
             const columns = canvas.width / fontSize;
             const drops = Array(Math.floor(columns)).fill(1);
