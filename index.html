@@ -10,6 +10,7 @@
             --hacker-green: #00ff41; 
             --soft-red: #ff4444;
             --soft-green: #00c851;
+            --text-color: #333;
         }
         
         body {
@@ -21,18 +22,29 @@
             min-height: 100vh;
             margin: 0;
             padding-top: 15px;
-            transition: all 0.3s;
+            transition: background-color 0.3s;
             overflow-x: hidden;
-            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        /* Efeito de Scanline Opcional */
+        .scanlines {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 9998;
+            pointer-events: none;
         }
 
         h1 {
             font-family: "Times New Roman", Times, serif;
             text-transform: uppercase;
-            color: #333;
             font-size: 1.8rem;
             margin-bottom: 5px;
-            cursor: pointer; /* Adicionado para o novo método de clique */
+            cursor: pointer;
             user-select: none;
         }
 
@@ -46,7 +58,6 @@
             overflow: hidden;
             border: 2px solid #000;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
-            position: relative;
         }
         
         #progressBar {
@@ -58,7 +69,6 @@
 
         .reasons-container {
             font-size: 0.8rem;
-            color: #555;
             margin-bottom: 15px;
             text-align: center;
             font-weight: bold;
@@ -73,6 +83,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             text-align: center;
             margin-bottom: 20px;
+            color: #333; /* Stats sempre legíveis */
         }
 
         .voting-area { display: flex; gap: 20px; }
@@ -86,25 +97,23 @@
             cursor: pointer;
             transition: all 0.2s ease;
             width: 150px;
+            color: #333;
         }
 
         .vote-card:hover { transform: scale(1.05); }
         .vote-card img { width: 100px; height: 100px; object-fit: contain; }
-        .vote-card p { font-weight: bold; margin-top: 10px; font-size: 0.9rem; }
 
-        /* PAINEL HACKER - CORREÇÃO DE Z-INDEX E DISPLAY */
         #adminPanel { 
             display: none;
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.98);
             color: var(--hacker-green);
             border: 3px solid var(--hacker-green);
             font-family: 'Courier New', monospace;
             width: 400px;
-            z-index: 10000; /* Super alto para garantir visibilidade */
+            z-index: 10000;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 50px rgba(0, 255, 65, 0.5);
@@ -132,25 +141,19 @@
             width: 100vw; height: 100vh;
             background: black;
             z-index: 9999;
+            text-align: center;
         }
-        #mediaOverlay video { width: 100%; height: 100%; object-fit: contain; }
-
-        @keyframes shake {
-            0% { transform: translate(1px, 1px); }
-            50% { transform: translate(-3px, -2px); }
-            100% { transform: translate(0, 0); }
-        }
+        #mediaOverlay video, #mediaOverlay img { width: 100%; height: 100%; object-fit: contain; }
 
         .btn-adm {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             margin-top: 8px;
             cursor: pointer;
             font-weight: bold;
             border: none;
             border-radius: 4px;
             font-size: 0.8rem;
-            text-transform: uppercase;
         }
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 15px; text-align: center; }
@@ -158,16 +161,20 @@
 </head>
 <body>
 
+    <div id="scanlineLayer" class="scanlines"></div>
+
     <audio id="soundAcerto" src="acerto.mp3"></audio>
     <audio id="soundErro" src="erro.mp3"></audio>
+    <audio id="soundTibas" src="tibas.mp3"></audio>
 
     <div id="mediaOverlay">
         <video id="videoElement"></video>
+        <img id="imageElement" style="display:none;">
     </div>
 
     <h1 id="mainDisplayTitle" onclick="clickAdmin()">MESA - CORRETO OU ERRADO?</h1>
     
-    <button style="background:#ffc107; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:bold; font-size: 0.7rem;" onclick="undo()">↩️ DESFAZER (CTRL+Z)</button>
+    <button style="background:#ffc107; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:bold; font-size: 0.7rem; color: #000;" onclick="undo()">↩️ DESFAZER (CTRL+Z)</button>
 
     <div class="progress-container" style="margin-top:20px;">
         <div id="progressBar"></div>
@@ -202,20 +209,30 @@
     <div id="adminPanel">
         <canvas id="matrix"></canvas>
         <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer; padding:5px; border-radius:3px; font-weight:bold;">X</button>
-        <h3 style="margin-top:0">>_ ACESSO_ROOT</h3>
+        <h3 style="margin-top:0">>_ MODO_HACKER</h3>
         
-        <img src="hacker-sigma.png" alt="Hacker Sigma" class="hacker-img" onerror="this.src='https://media.giphy.com/media/YQitE4YNQNahy/giphy.gif'">
+        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/YQitE4YNQNahy/giphy.gif" alt="Matrix GIF" class="hacker-img">
         
-        <div style="text-align: left;">
-            <label style="font-size: 0.7rem;">NOME DA PÁGINA:</label>
+        <div style="text-align: left; font-size: 0.75rem;">
+            <label>NOME DA PÁGINA:</label>
             <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="width:95%; background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px; margin-bottom:10px;">
             
-            <label style="display:block; font-size: 0.7rem;">COR DE FUNDO:</label>
-            <input type="color" id="colorWheel" oninput="changeBgColor(this.value)" style="width:100%; height:40px; cursor:pointer; background:none; border:1px solid var(--hacker-green);">
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>COR FUNDO:</label>
+                    <input type="color" id="colorWheel" oninput="changeBgColor(this.value)" style="width:100%; height:30px; cursor:pointer; background:none; border:1px solid var(--hacker-green);">
+                </div>
+                <div style="flex: 1;">
+                    <label>COR TEXTO:</label>
+                    <input type="color" id="textColorWheel" oninput="changeTextColor(this.value)" style="width:100%; height:30px; cursor:pointer; background:none; border:1px solid var(--hacker-green);">
+                </div>
+            </div>
+
+            <button onclick="toggleScanlines()" class="btn-adm" style="background:#444; color:white; margin-top:10px;">ALTERNAR SCANLINES (RETRO)</button>
         </div>
 
-        <button onclick="playMedia('67.mp4')" class="btn-adm" style="background:#ff4444; color:white; margin-top:15px;">ATIVAR PROTOCOLO 67</button>
-        <button onclick="resetarTudo()" class="btn-adm" style="background:var(--hacker-green); color:black;">REINICIAR DATABASE</button>
+        <button onclick="playMedia('67.mp4', 'video')" class="btn-adm" style="background:#ff4444; color:white; margin-top:15px;">PROTOCOLO 67</button>
+        <button onclick="resetarTudo()" class="btn-adm" style="background:var(--hacker-green); color:black;">REINICIAR TUDO</button>
     </div>
 
     <div id="modalMotivos" class="modal" style="background:white; width:300px; color:black; box-shadow:0 0 20px rgba(0,0,0,0.5); padding: 20px;">
@@ -232,7 +249,7 @@
     <script>
         let dados = JSON.parse(localStorage.getItem('mesa_final_v3')) || { 
             sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
-            titulo: "MESA - CORRETO OU ERRADO?", corFundo: "#f0f0f0"
+            titulo: "MESA - CORRETO OU ERRADO?", corFundo: "#f0f0f0", corTexto: "#333333"
         };
         let historico = [];
         let inputBuffer = "";
@@ -251,7 +268,10 @@
             document.getElementById('s-variacao').innerText = dados.variacao;
             document.getElementById('s-soltagem').innerText = dados.soltagem;
             document.getElementById('mainDisplayTitle').innerText = dados.titulo;
+            
             document.body.style.backgroundColor = dados.corFundo;
+            document.body.style.setProperty('--text-color', dados.corTexto);
+            document.getElementById('mainDisplayTitle').style.color = dados.corTexto;
 
             let total = dados.sim + dados.nao;
             let perc = total === 0 ? 0 : Math.round((dados.sim / total) * 100);
@@ -259,19 +279,26 @@
             document.getElementById('percentText').innerText = perc + "%";
         }
 
-        // Método de segurança: Clique 5 vezes no título para abrir o Admin
         function clickAdmin() {
             clickCount++;
-            if(clickCount >= 5) {
-                abrirAdmin();
-                clickCount = 0;
-            }
-            setTimeout(() => clickCount = 0, 2000); // Reseta se demorar a clicar
+            if(clickCount >= 5) { abrirAdmin(); clickCount = 0; }
+            setTimeout(() => clickCount = 0, 2000);
         }
 
         function abrirAdmin() {
             document.getElementById('adminPanel').style.display = 'block';
             startMatrix();
+        }
+
+        function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+
+        function changeTitle(v) { dados.titulo = v || "MESA - CORRETO OU ERRADO?"; salvar(); }
+        function changeBgColor(v) { dados.corFundo = v; salvar(); }
+        function changeTextColor(v) { dados.corTexto = v; salvar(); }
+        
+        function toggleScanlines() {
+            const s = document.getElementById('scanlineLayer');
+            s.style.display = (s.style.display === 'block') ? 'none' : 'block';
         }
 
         function votarSim() {
@@ -302,38 +329,56 @@
             salvar();
         }
 
-        function changeTitle(v) { dados.titulo = v || "MESA - CORRETO OU ERRADO?"; salvar(); }
-        function changeBgColor(v) { dados.corFundo = v; salvar(); }
-        function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
-
-        // MONITORAMENTO DE TECLADO REFORÇADO
+        // COMANDOS DE TECLADO
         document.addEventListener('keydown', (e) => {
             if(e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
             
             inputBuffer += e.key.toLowerCase();
-            if(inputBuffer.length > 30) inputBuffer = inputBuffer.substring(1);
+            if(inputBuffer.length > 20) inputBuffer = inputBuffer.substring(1);
 
-            if(inputBuffer.endsWith("67")) { playMedia("67.mp4"); inputBuffer = ""; }
-            if(inputBuffer.endsWith("mustard")) { playMedia("mustardtuff.mp4"); inputBuffer = ""; }
+            if(inputBuffer.endsWith("67")) { playMedia('67.mp4', 'video'); inputBuffer = ""; }
+            if(inputBuffer.endsWith("mustard")) { playMedia('mustardtuff.mp4', 'video'); inputBuffer = ""; }
             
-            // Verifica se a palavra está contida no buffer
-            if(inputBuffer.includes("harryblocks")) {
-                abrirAdmin();
+            // CÓDIGO SECRETO TTTT
+            if(inputBuffer.endsWith("tttt")) {
+                document.getElementById('soundTibas').play();
+                playMedia('tttt.jpg', 'image');
                 inputBuffer = "";
             }
+            
+            if(inputBuffer.includes("harryblocks")) { abrirAdmin(); inputBuffer = ""; }
         });
 
-        function playMedia(file) {
+        function playMedia(file, type) {
             const overlay = document.getElementById('mediaOverlay');
             const video = document.getElementById('videoElement');
+            const img = document.getElementById('imageElement');
+            
             overlay.style.display = 'block';
-            video.src = file;
-            video.play().catch(e => console.log("Erro: ", e));
-            video.onended = () => { overlay.style.display = 'none'; video.src = ""; };
-            overlay.onclick = () => { overlay.style.display = 'none'; video.pause(); video.src = ""; };
+            
+            if(type === 'video') {
+                img.style.display = 'none';
+                video.style.display = 'block';
+                video.src = file;
+                video.play();
+                video.onended = () => { overlay.style.display = 'none'; video.src = ""; };
+            } else {
+                video.style.display = 'none';
+                img.style.display = 'block';
+                img.src = file;
+                // Para imagem, fecha em 5 segundos ou no clique
+                setTimeout(() => { overlay.style.display = 'none'; }, 5000);
+            }
+
+            overlay.onclick = () => { 
+                overlay.style.display = 'none'; 
+                video.pause(); video.src = ""; 
+                document.getElementById('soundTibas').pause();
+                document.getElementById('soundTibas').currentTime = 0;
+            };
         }
 
-        function resetarTudo() { if(confirm("DESEJA ZERAR TUDO?")) { localStorage.clear(); location.reload(); } }
+        function resetarTudo() { if(confirm("NUCLEAR WIPE?")) { localStorage.clear(); location.reload(); } }
 
         let matrixInterval;
         function startMatrix() {
@@ -344,7 +389,6 @@
             const fontSize = 10;
             const columns = canvas.width / fontSize;
             const drops = Array(Math.floor(columns)).fill(1);
-
             if(matrixInterval) clearInterval(matrixInterval);
             matrixInterval = setInterval(() => {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
