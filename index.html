@@ -23,22 +23,21 @@
             padding-top: 15px;
             transition: all 0.3s;
             overflow-x: hidden;
-            font-size: 14px; /* Fonte reduzida */
+            font-size: 14px;
         }
 
         h1 {
             font-family: "Times New Roman", Times, serif;
             text-transform: uppercase;
             color: #333;
-            font-size: 1.8rem; /* Fonte reduzida */
+            font-size: 1.8rem;
             margin-bottom: 5px;
         }
 
-        /* Barra de Aproveitamento Estilo Vida */
         .progress-container {
             width: 85%;
             max-width: 450px;
-            background: var(--soft-red); /* Lado do NÃO (Fundo) */
+            background: var(--soft-red);
             height: 25px;
             border-radius: 8px;
             margin-bottom: 5px;
@@ -51,7 +50,7 @@
         #progressBar {
             height: 100%;
             width: 0%;
-            background: var(--soft-green); /* Lado do SIM (Preenchimento) */
+            background: var(--soft-green);
             transition: width 0.5s ease-out;
         }
 
@@ -91,8 +90,12 @@
         .vote-card img { width: 100px; height: 100px; object-fit: contain; }
         .vote-card p { font-weight: bold; margin-top: 10px; font-size: 0.9rem; }
 
-        /* PAINEL HACKER ATUALIZADO */
         #adminPanel { 
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.95);
             color: var(--hacker-green);
             border: 2px solid var(--hacker-green);
@@ -100,11 +103,13 @@
             width: 400px;
             z-index: 5000;
             padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px var(--hacker-green);
         }
 
         .hacker-img {
             width: 100%;
-            max-height: 150px;
+            max-height: 120px;
             object-fit: cover;
             border: 1px solid var(--hacker-green);
             margin-bottom: 10px;
@@ -114,10 +119,9 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
-            opacity: 0.15;
+            opacity: 0.2;
         }
 
-        /* Overlay do Vídeo/Easter Eggs */
         #mediaOverlay {
             display: none;
             position: fixed;
@@ -136,13 +140,14 @@
 
         .btn-adm {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             margin-top: 8px;
             cursor: pointer;
             font-weight: bold;
             border: none;
             border-radius: 4px;
             font-size: 0.8rem;
+            text-transform: uppercase;
         }
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 15px; text-align: center; }
@@ -152,7 +157,6 @@
 
     <audio id="soundAcerto" src="acerto.mp3"></audio>
     <audio id="soundErro" src="erro.mp3"></audio>
-    <audio id="sound42" src="42tuff.mp3"></audio>
 
     <div id="mediaOverlay">
         <video id="videoElement"></video>
@@ -192,12 +196,12 @@
         </div>
     </div>
 
-    <div id="adminPanel" class="modal">
+    <div id="adminPanel">
         <canvas id="matrix"></canvas>
-        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer; padding:5px; border-radius:3px;">X</button>
-        <h3>SISTEMA HACKER</h3>
+        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer; padding:5px; border-radius:3px; font-weight:bold;">X</button>
+        <h3 style="margin-top:0">>_ SISTEMA_ADMIN</h3>
         
-        <img src="hacker-sigma.png" alt="Hacker Sigma" class="hacker-img" onerror="this.src='https://via.placeholder.com/400x150/000/00FF41?text=HACKER+SIGMA'">
+        <img src="hacker-sigma.png" alt="Hacker Sigma" class="hacker-img" onerror="this.src='https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/YQitE4YNQNahy/giphy.gif'">
         
         <div style="text-align: left;">
             <label style="font-size: 0.7rem;">NOME DA PÁGINA:</label>
@@ -207,6 +211,7 @@
             <input type="color" id="colorWheel" oninput="changeBgColor(this.value)" style="width:100%; height:40px; cursor:pointer; background:none; border:1px solid var(--hacker-green);">
         </div>
 
+        <button onclick="playMedia('67.mp4')" class="btn-adm" style="background:#ff4444; color:white; margin-top:15px;">ATIVAR PROTOCOLO 67</button>
         <button onclick="resetarTudo()" class="btn-adm" style="background:var(--hacker-green); color:black;">REINICIAR DATABASE</button>
     </div>
 
@@ -246,14 +251,13 @@
 
             let total = dados.sim + dados.nao;
             let perc = total === 0 ? 0 : Math.round((dados.sim / total) * 100);
-            
             const bar = document.getElementById('progressBar');
             bar.style.width = perc + "%";
             document.getElementById('percentText').innerText = perc + "%";
         }
 
         function votarSim() {
-            document.getElementById('soundAcerto').play();
+            try { document.getElementById('soundAcerto').play(); } catch(e){}
             confetti({ particleCount: 100, spread: 60, origin: { y: 0.7 } });
             dados.sim++;
             historico.push('sim');
@@ -263,7 +267,7 @@
         function mostrarMotivos() { document.getElementById('modalMotivos').style.display = 'block'; }
 
         function votarNao(motivo) {
-            document.getElementById('soundErro').play();
+            try { document.getElementById('soundErro').play(); } catch(e){}
             document.body.style.animation = "shake 0.2s 2";
             dados.nao++;
             dados[motivo]++;
@@ -284,29 +288,15 @@
         function changeBgColor(v) { dados.corFundo = v; salvar(); }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
 
-        // Sistema de Easter Eggs por Teclado
         document.addEventListener('keydown', (e) => {
             if(e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
             
             inputBuffer += e.key.toLowerCase();
-            if(inputBuffer.length > 15) inputBuffer = inputBuffer.substring(1);
+            if(inputBuffer.length > 20) inputBuffer = inputBuffer.substring(1);
 
-            // Easter Egg: 67
-            if(inputBuffer.endsWith("67")) {
-                playMedia("67.mp4");
-                inputBuffer = "";
-            }
-            // Easter Egg: 42
-            if(inputBuffer.endsWith("42")) {
-                document.getElementById('sound42').play();
-                inputBuffer = "";
-            }
-            // Easter Egg: mustard
-            if(inputBuffer.endsWith("mustard")) {
-                playMedia("mustardtuff.mp4"); // Alterado para .mp4 para funcionar como vídeo
-                inputBuffer = "";
-            }
-            // Painel Hacker
+            if(inputBuffer.endsWith("67")) { playMedia("67.mp4"); inputBuffer = ""; }
+            if(inputBuffer.endsWith("mustard")) { playMedia("mustardtuff.mp4"); inputBuffer = ""; }
+            
             if(inputBuffer.includes("harryblocks")) {
                 document.getElementById('adminPanel').style.display = 'block';
                 startMatrix();
@@ -319,28 +309,33 @@
             const video = document.getElementById('videoElement');
             overlay.style.display = 'block';
             video.src = file;
-            video.play().catch(e => console.log("Erro ao tocar media: ", e));
+            video.play().catch(e => console.log("Erro: ", e));
             
-            video.onended = () => overlay.style.display = 'none';
-            overlay.onclick = () => { overlay.style.display = 'none'; video.pause(); };
+            video.onended = () => { overlay.style.display = 'none'; video.src = ""; };
+            overlay.onclick = () => { overlay.style.display = 'none'; video.pause(); video.src = ""; };
         }
 
         function resetarTudo() { if(confirm("REINICIAR SISTEMA?")) { localStorage.clear(); location.reload(); } }
 
+        let matrixInterval;
         function startMatrix() {
             const canvas = document.getElementById('matrix');
             const ctx = canvas.getContext('2d');
             canvas.width = 400; canvas.height = 400;
-            const letters = "01";
+            const letters = "010101HACKER";
             const fontSize = 10;
             const columns = canvas.width / fontSize;
             const drops = Array(Math.floor(columns)).fill(1);
-            setInterval(() => {
+
+            if(matrixInterval) clearInterval(matrixInterval);
+            matrixInterval = setInterval(() => {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "#0F0";
+                ctx.font = fontSize + "px monospace";
                 for(let i = 0; i < drops.length; i++) {
-                    ctx.fillText(letters[Math.floor(Math.random()*2)], i*fontSize, drops[i]*fontSize);
+                    const text = letters[Math.floor(Math.random()*letters.length)];
+                    ctx.fillText(text, i*fontSize, drops[i]*fontSize);
                     if(drops[i]*fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 }
