@@ -27,25 +27,28 @@
             color: #333;
             font-size: 2.8rem;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* Barra de Aproveitamento (O Diferencial) */
+        /* Barra de Aproveitamento com Degradê Dinâmico */
         .progress-container {
             width: 80%;
             max-width: 500px;
-            background: #ddd;
-            height: 25px;
+            background: #333;
+            height: 30px;
             border-radius: 50px;
             margin-bottom: 10px;
             overflow: hidden;
-            border: 2px solid #333;
+            border: 3px solid #000;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
         }
+        
         #progressBar {
             height: 100%;
-            width: 50%;
-            background: linear-gradient(90deg, #28a745, #00ff41);
-            transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 0%;
+            /* O degradê será controlado via JS para mudar de Vermelho -> Amarelo -> Verde */
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
+            background-size: 500px 30px; 
+            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .stats-box {
@@ -57,7 +60,6 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             text-align: center;
             margin-bottom: 30px;
-            border-left: 5px solid #007bff;
         }
 
         .voting-area { display: flex; gap: 40px; }
@@ -73,16 +75,16 @@
             width: 220px;
         }
 
-        .vote-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        .vote-card:hover { transform: translateY(-10px); }
         .vote-card img { width: 160px; height: 160px; object-fit: contain; }
 
-        /* PAINEL HACKER SUPREMO */
+        /* PAINEL HACKER */
         #adminPanel { 
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.98);
             color: var(--hacker-green);
             border: 2px solid var(--hacker-green);
             font-family: 'Courier New', monospace;
-            width: 500px;
+            width: 450px;
             z-index: 5000;
         }
 
@@ -90,88 +92,122 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
-            opacity: 0.3;
+            opacity: 0.2;
         }
 
-        /* Efeito de Tremer (Shake) */
+        /* Color Picker Estilo Roda Permanente */
+        #colorWheel {
+            width: 100%;
+            height: 100px;
+            cursor: pointer;
+            border: 2px solid var(--hacker-green);
+            background: none;
+            margin-top: 10px;
+        }
+
+        /* Overlay do Vídeo Protocolo 67 */
+        #videoOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: black;
+            z-index: 9999;
+        }
+        #videoOverlay video { width: 100%; height: 100%; object-fit: contain; }
+
         @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            20% { transform: translate(-3px, 0px) rotate(-1deg); }
-            40% { transform: translate(3px, 2px) rotate(1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-3px, -2px); }
+            100% { transform: translate(0, 0); }
         }
 
-        .btn-controlz { background: #ffc107; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.5); text-align: center; }
+        .btn-adm {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; border-radius: 15px; text-align: center; }
     </style>
 </head>
-<body id="mainBody">
+<body>
+
+    <audio id="soundAcerto" src="acerto.mp3"></audio>
+    <audio id="soundErro" src="erro.mp3"></audio>
+
+    <div id="videoOverlay">
+        <video id="vid67" src="67.mp4"></video> </div>
 
     <h1 id="mainDisplayTitle">MESA - CORRETO OU ERRADO?</h1>
     
-    <button class="btn-controlz" onclick="undo()">↩️ REVERTER ÚLTIMO VOTO (CTRL+Z)</button>
+    <button style="background:#ffc107; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="undo()">↩️ DESFAZER (CTRL+Z)</button>
 
-    <div class="progress-container">
+    <div class="progress-container" style="margin-top:20px;">
         <div id="progressBar"></div>
     </div>
-    <div style="font-weight: bold; margin-bottom: 20px;">Aproveitamento: <span id="percentText">0%</span></div>
+    <div style="font-weight: bold; margin-bottom: 20px;">TAXA DE SUCESSO: <span id="percentText">0%</span></div>
 
     <div class="stats-box">
         <div style="font-size: 1.5rem; margin-bottom: 10px;">
             ✅ <span id="s-sim">0</span> | ❌ <span id="s-nao">0</span>
         </div>
         <div style="color: #666; font-size: 0.9rem;">
-            PRG: <span id="s-programacao">0</span> | MON: <span id="s-montagem">0</span> | VAR: <span id="s-variacao">0</span> | SOL: <span id="s-soltagem">0</span>
+            PROGRAMAÇÃO: <span id="s-programacao">0</span> | MONTAGEM: <span id="s-montagem">0</span> | VARIAÇÃO: <span id="s-variacao">0</span> | SOLTAGEM: <span id="s-soltagem">0</span>
         </div>
     </div>
 
     <div class="voting-area">
         <div class="vote-card" onclick="votarSim()">
             <img src="like.png">
-            <p style="font-size: 1.4rem; font-weight: bold;">CORRETO</p>
+            <p>CORRETO</p>
         </div>
         <div class="vote-card" onclick="mostrarMotivos()">
             <img src="6323-dislikebs.png">
-            <p style="font-size: 1.4rem; font-weight: bold;">ERRADO</p>
+            <p>ERRADO</p>
         </div>
-    </div>
-
-    <div id="modalMotivos" class="modal" style="background: white; width: 400px; color: black;">
-        <img src="2e82eda13b1ad2f508a6651858124034.png" style="width: 100%; border-radius: 10px;">
-        <h3 style="font-family: Arial;">REPORTAR FALHA TÉCNICA</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button onclick="votarNao('programacao')" style="padding:15px; cursor:pointer;">Programação</button>
-            <button onclick="votarNao('montagem')" style="padding:15px; cursor:pointer;">Montagem</button>
-            <button onclick="votarNao('variacao')" style="padding:15px; cursor:pointer;">Variação</button>
-            <button onclick="votarNao('soltagem')" style="padding:15px; cursor:pointer;">Soltagem</button>
-        </div>
-        <button onclick="document.getElementById('modalMotivos').style.display='none'" style="margin-top:20px; border:none; background:none; color:red; cursor:pointer;">CANCELAR</button>
     </div>
 
     <div id="adminPanel" class="modal">
         <canvas id="matrix"></canvas>
-        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer;">[X] CLOSE_ROOT</button>
-        <h3>> DATABASE_OVERRIDE_V2</h3>
-        <div style="text-align: left; padding: 10px;">
-            <label>SYSTEM_LABEL:</label><br>
-            <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="width:100%; background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green);"><br><br>
-            <label>COLOR_HEX_CODE:</label><br>
-            <input type="color" id="colorWheel" oninput="changeBgColor(this.value)" style="width:100%; cursor:pointer;">
+        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer; padding:5px;">SAIR</button>
+        <h3>CONFIGURAÇÕES DO SISTEMA</h3>
+        
+        <div style="text-align: left;">
+            <label>NOME DA PÁGINA:</label>
+            <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="width:95%; background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px;">
+            
+            <label style="display:block; margin-top:15px;">COR DE FUNDO (SELECIONE NA RODA):</label>
+            <input type="color" id="colorWheel" oninput="changeBgColor(this.value)">
         </div>
-        <button onclick="resetarTudo()" style="width:100%; padding:10px; background:var(--hacker-green); color:black; font-weight:bold; cursor:pointer; border:none;">PURGE_ALL_DATA (Zerar)</button>
+
+        <button onclick="executar67()" class="btn-adm" style="background:#ff4444; color:white;">ATIVAR PROTOCOLO 67</button>
+        <button onclick="resetarTudo()" class="btn-adm" style="background:var(--hacker-green); color:black;">REINICIAR BANCO DE DADOS</button>
+    </div>
+
+    <div id="modalMotivos" class="modal" style="background:white; width:350px; color:black; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+        <h3>QUAL O MOTIVO?</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <button onclick="votarNao('programacao')" style="padding:10px;">Programação</button>
+            <button onclick="votarNao('montagem')" style="padding:10px;">Montagem</button>
+            <button onclick="votarNao('variacao')" style="padding:10px;">Variação</button>
+            <button onclick="votarNao('soltagem')" style="padding:10px;">Soltagem</button>
+        </div>
+        <button onclick="document.getElementById('modalMotivos').style.display='none'" style="margin-top:15px; color:red; border:none; background:none; cursor:pointer;">CANCELAR</button>
     </div>
 
     <script>
-        let dados = JSON.parse(localStorage.getItem('mesa_dados_v2')) || { 
+        let dados = JSON.parse(localStorage.getItem('mesa_final_v3')) || { 
             sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
             titulo: "MESA - CORRETO OU ERRADO?", corFundo: "#f0f0f0"
         };
         let historico = [];
 
         function salvar() {
-            localStorage.setItem('mesa_dados_v2', JSON.stringify(dados));
+            localStorage.setItem('mesa_final_v3', JSON.stringify(dados));
             atualizar();
         }
 
@@ -185,13 +221,22 @@
             document.getElementById('mainDisplayTitle').innerText = dados.titulo;
             document.body.style.backgroundColor = dados.corFundo;
 
+            // Lógica da Barra de Progresso com Degradê
             let total = dados.sim + dados.nao;
             let perc = total === 0 ? 0 : Math.round((dados.sim / total) * 100);
-            document.getElementById('progressBar').style.width = perc + "%";
+            const bar = document.getElementById('progressBar');
+            bar.style.width = perc + "%";
             document.getElementById('percentText').innerText = perc + "%";
+
+            // Muda a cor da barra baseado na porcentagem (Vermelho -> Verde)
+            let red = perc < 50 ? 255 : Math.floor(255 - (perc - 50) * 5.1);
+            let green = perc > 50 ? 255 : Math.floor(perc * 5.1);
+            bar.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
+            bar.style.background = `linear-gradient(90deg, rgb(${red}, ${green}, 0), #00ff41)`;
         }
 
         function votarSim() {
+            document.getElementById('soundAcerto').play();
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
             dados.sim++;
             historico.push('sim');
@@ -201,13 +246,14 @@
         function mostrarMotivos() { document.getElementById('modalMotivos').style.display = 'block'; }
 
         function votarNao(motivo) {
-            document.body.style.animation = "shake 0.3s";
-            setTimeout(() => document.body.style.animation = "", 300);
+            document.getElementById('soundErro').play();
+            document.body.style.animation = "shake 0.2s 2";
             dados.nao++;
             dados[motivo]++;
             historico.push(motivo);
             document.getElementById('modalMotivos').style.display = 'none';
             salvar();
+            setTimeout(() => document.body.style.animation = "", 200);
         }
 
         function undo() {
@@ -217,12 +263,23 @@
             salvar();
         }
 
-        function changeTitle(v) { dados.titulo = v; salvar(); }
+        function changeTitle(v) { dados.titulo = v || "MESA - CORRETO OU ERRADO?"; salvar(); }
         function changeBgColor(v) { dados.corFundo = v; salvar(); }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
-        function resetarTudo() { if(confirm("NUCLEAR_WIPE?")) { localStorage.clear(); location.reload(); } }
 
-        // Código Secreto e Atalhos
+        // Protocolo 67
+        function executar67() {
+            const overlay = document.getElementById('videoOverlay');
+            const video = document.getElementById('vid67');
+            overlay.style.display = 'block';
+            video.play();
+            video.onended = () => overlay.style.display = 'none';
+            // Para sair do vídeo antes de acabar, basta clicar na tela
+            overlay.onclick = () => { overlay.style.display = 'none'; video.pause(); };
+        }
+
+        function resetarTudo() { if(confirm("REINICIAR SISTEMA?")) { localStorage.clear(); location.reload(); } }
+
         let s = "";
         document.addEventListener('keydown', (e) => {
             if(e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
@@ -234,28 +291,24 @@
             }
         });
 
-        // Efeito Matrix (Diferencial de Programador)
         function startMatrix() {
             const canvas = document.getElementById('matrix');
             const ctx = canvas.getContext('2d');
-            canvas.width = 500; canvas.height = 400;
-            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            canvas.width = 450; canvas.height = 400;
+            const letters = "01";
             const fontSize = 10;
             const columns = canvas.width / fontSize;
             const drops = Array(Math.floor(columns)).fill(1);
-            function draw() {
+            setInterval(() => {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "#0F0";
-                ctx.font = fontSize + "px arial";
                 for(let i = 0; i < drops.length; i++) {
-                    const text = letters[Math.floor(Math.random() * letters.length)];
-                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                    if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    ctx.fillText(letters[Math.floor(Math.random()*2)], i*fontSize, drops[i]*fontSize);
+                    if(drops[i]*fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 }
-            }
-            setInterval(draw, 33);
+            }, 33);
         }
 
         atualizar();
