@@ -3,191 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="tab-title">mesa - correto ou errado?</title>
+    <title>SISTEMA DE VOTAÇÃO</title>
     <style>
-       body {
-    /* Troca a Comic Sans por Times New Roman */
-    font-family: "Times New Roman", Times, serif;
-}
-
-h1 {
-    /* Título em MAIÚSCULO */
-    text-transform: uppercase;
-    font-family: "Times New Roman", Times, serif;
-}
-
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
-        
-        .header-menu { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
-        
-        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        .btn-results { background: #007bff; color: white; }
-        .btn-undo { background: #ffc107; color: #212529; }
-        
-        /* Painel Hacker escondido */
-        #dev-panel { 
-            display: none; margin: 20px auto; max-width: 400px; padding: 20px; 
-            background: #0d1117; color: #00ff41; border-radius: 10px; 
-            border: 1px solid #00ff41; box-shadow: 0 0 20px rgba(0,255,65,0.5);
+        body {
+            background-color: #f0f0f0;
+            font-family: "Times New Roman", Times, serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
-        #dev-panel img { width: 100%; border-radius: 5px; margin-bottom: 15px; }
-        #dev-panel input { background: #161b22; border: 1px solid #30363d; color: white; padding: 8px; width: 80%; margin-bottom: 10px; }
-        
-        .btn-reset { background: #e81123; color: white; width: 100%; margin-top: 10px; }
-        .btn-rename { background: #238636; color: white; width: 100%; }
 
-        .main-options { display: flex; justify-content: center; gap: 40px; margin-top: 20px; }
-        .option-card { cursor: pointer; transition: 0.3s; padding: 20px; border-radius: 15px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .option-card:hover { transform: translateY(-5px); }
-        .option-card img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 15px; }
-        
-        #modal-motivo { 
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            background: white; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.4); z-index: 10; color: #333; 
+        h1 {
+            text-transform: uppercase;
+            color: #333;
+            font-size: 3rem;
+            margin-bottom: 30px;
         }
-        .reason-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        #display-resultados { display: none; margin: 20px auto; max-width: 400px; padding: 20px; background: #fff; border-radius: 10px; border: 1px solid #ddd; }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .options {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .card {
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .card:hover {
+            transform: scale(1.1);
+            border-color: #ddd;
+        }
+
+        .card img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+        }
+
+        .counter {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Estilo do Painel de Admin */
+        #adminPanel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            border: 3px solid #333;
+            padding: 30px;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            min-width: 300px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .close-btn:hover {
+            background: #cc0000;
+        }
+
+        #hackerImage {
+            width: 100px;
+            display: block;
+            margin: 0 auto 20px;
+        }
+
+        .admin-title {
+            text-align: center;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <h1 id="main-title">mesa - correto ou errado?</h1>
+    <h1>SISTEMA DE VOTAÇÃO</h1>
 
-    <div class="header-menu">
-        <button class="btn-results" onclick="toggleElement('display-resultados')">📊 Resultados</button>
-        <button class="btn-undo" onclick="desfazer()">↩️ Control Z</button>
-    </div>
-
-    <div id="dev-panel">
-        <img src="hacker options sigma.png" alt="Hacker Options">
-        <h3>SISTEMA DECRYPTADO</h3>
-        <input type="text" id="new-name-input" placeholder="Renomear site...">
-        <button class="btn-rename" onclick="renomearSite()">EXECUTAR RENOMEAÇÃO</button>
-        <button class="btn-reset" onclick="resetar()">DELETAR REGISTROS</button>
-        <div id="adminPanel" style="display:none; position:fixed; top:20%; left:30%; background:white; border:2px solid black; padding:20px; z-index:1000;">
-    <button onclick="fecharPainel()" style="float:right; cursor:pointer;">X</button>
-    <h2>PAINEL DE CONTROLE</h2>
-    </div>
-    </div>
-
-    <div id="display-resultados">
-        <h3>Estatísticas</h3>
-        <p>✅ Sim: <strong id="res-sim">0</strong> | ❌ Não: <strong id="res-nao">0</strong></p>
-        <hr>
-        <div style="text-align: left; display: inline-block;">
-            Montagem: <span id="res-montagem">0</span> | Programação: <span id="res-programacao">0</span><br>
-            Variação: <span id="res-variacao">0</span> | Soltagem: <span id="res-soltagem">0</span>
+    <div class="container">
+        <div class="options">
+            <div class="card" onclick="votar('correto')">
+                <img src="like.png" alt="Correto">
+                <div class="counter">Correto: <span id="countCorreto">0</span></div>
+            </div>
+            
+            <div class="card" onclick="votar('errado')">
+                <img src="6323-dislikebs.png" alt="Errado">
+                <div class="counter">Errado: <span id="countErrado">0</span></div>
+            </div>
         </div>
     </div>
 
-    <div class="main-options">
-        <div class="option-card" onclick="votarSim()">
-            <img src="like.png" alt="Sim">
-            <div><strong>CORRETO</strong></div>
-        </div>
-        <div class="option-card" onclick="abrirMotivos()">
-            <img src="6323-dislikebs.png" alt="Não">
-            <div><strong>ERRADO</strong></div>
-        </div>
-    </div>
-
-    <div id="modal-motivo">
-        <img src="2e82eda13b1ad2f508a6651858124034.png" alt="Dúvida" width="80">
-        <h3>Por quê?</h3>
-        <div class="reason-grid">
-            <button onclick="votarMotivo('Montagem')">Montagem</button>
-            <button onclick="votarMotivo('Programação')">Programação</button>
-            <button onclick="votarMotivo('Variação')">Variação</button>
-            <button onclick="votarMotivo('Soltagem')">Soltagem</button>
-        </div>
+    <!-- Painel de Admin Oculto -->
+    <div id="adminPanel">
+        <button class="close-btn" onclick="fecharPainel()">X</button>
+        <img id="hackerImage" src="hacker options sigma.png" alt="Admin">
+        <div class="admin-title">PAINEL DE ADMINISTRAÇÃO</div>
+        
+        <p>Total de votos computados:</p>
+        <ul>
+            <li>Positivos: <span id="adminCorreto">0</span></li>
+            <li>Negativos: <span id="adminErrado">0</span></li>
+        </ul>
+        <button onclick="resetarVotos()" style="width: 100%; padding: 10px; cursor: pointer;">RESETAR DADOS</button>
     </div>
 
     <script>
-        let dados = JSON.parse(localStorage.getItem('pesquisaData')) || { sim: 0, nao: 0, Montagem: 0, Programação: 0, Variação: 0, Soltagem: 0 };
-        let nomeSite = localStorage.getItem('nomeSite') || "mesa - correto ou errado?";
-        
-        // Lógica de Desfazer Único
-        let ultimoEstado = null; 
+        // Sistema de Votos
+        let votos = {
+            correto: 0,
+            errado: 0
+        };
 
-        // Lógica da senha secreta
-        let comboSecret = "";
-        window.addEventListener('keydown', (e) => {
-            comboSecret += e.key.toLowerCase();
-            if (comboSecret.includes("harry blocks")) {
-                toggleElement('dev-panel');
-                comboSecret = ""; // Reseta o buffer
-                alert("Acesso concedido, Hacker.");
-            }
-            // Limpa o buffer se ficar muito longo para não travar
-            if (comboSecret.length > 20) comboSecret = comboSecret.substring(1);
-        });
+        function votar(tipo) {
+            votos[tipo]++;
+            atualizarTela();
+        }
 
         function atualizarTela() {
-            document.getElementById('res-sim').innerText = dados.sim;
-            document.getElementById('res-nao').innerText = dados.nao;
-            document.getElementById('res-montagem').innerText = dados.Montagem;
-            document.getElementById('res-programacao').innerText = dados.Programação;
-            document.getElementById('res-variacao').innerText = dados.Variação;
-            document.getElementById('res-soltagem').innerText = dados.Soltagem;
-            document.getElementById('main-title').innerText = nomeSite;
-            document.getElementById('tab-title').innerText = nomeSite;
-            localStorage.setItem('pesquisaData', JSON.stringify(dados));
-            localStorage.setItem('nomeSite', nomeSite);
+            document.getElementById('countCorreto').innerText = votos.correto;
+            document.getElementById('countErrado').innerText = votos.errado;
+            // Atualiza o painel de admin também
+            document.getElementById('adminCorreto').innerText = votos.correto;
+            document.getElementById('adminErrado').innerText = votos.errado;
         }
 
-        function votarSim() {
-            ultimoEstado = JSON.parse(JSON.stringify(dados)); // Salva o estado ANTES de votar
-            dados.sim++;
-            atualizarTela();
-        }
-
-        function abrirMotivos() {
-            document.getElementById('modal-motivo').style.display = 'block';
-        }
-
-        function votarMotivo(motivo) {
-            ultimoEstado = JSON.parse(JSON.stringify(dados)); // Salva o estado ANTES de votar
-            dados.nao++;
-            dados[motivo]++;
-            document.getElementById('modal-motivo').style.display = 'none';
-            atualizarTela();
-        }
-
-        function desfazer() {
-            if (ultimoEstado) {
-                dados = JSON.parse(JSON.stringify(ultimoEstado));
-                ultimoEstado = null; // Mata a chance de desfazer de novo até o próximo voto
-                atualizarTela();
-                alert("Control Z executado. Você não pode desfazer novamente este voto.");
-            } else {
-                alert("Sem votos recentes para desfazer ou limite atingido!");
-            }
-        }
-
-        function renomearSite() {
-            const novoNome = document.getElementById('new-name-input').value;
-            if (novoNome.trim() !== "") {
-                nomeSite = novoNome;
+        function resetarVotos() {
+            if(confirm("Deseja mesmo apagar todos os votos?")) {
+                votos.correto = 0;
+                votos.errado = 0;
                 atualizarTela();
             }
         }
 
-        function resetar() {
-            if (confirm("Deletar tudo?")) {
-                dados = { sim: 0, nao: 0, Montagem: 0, Programação: 0, Variação: 0, Soltagem: 0 };
-                ultimoEstado = null;
-                atualizarTela();
+        function fecharPainel() {
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+
+        // Sistema de Código Secreto "harry blocks"
+        let sequence = "";
+        const secretCode = "harryblocks"; // sem espaço para facilitar a detecção
+
+        document.addEventListener('keydown', (e) => {
+            // Remove espaços da entrada para evitar erros de digitação
+            if(e.key === " ") return;
+            
+            sequence += e.key.toLowerCase();
+            
+            if (sequence.includes(secretCode)) {
+                document.getElementById('adminPanel').style.display = 'block';
+                sequence = ""; // Reseta a sequência
             }
-        }
-
-        function toggleElement(id) {
-            let el = document.getElementById(id);
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        }
-
-        atualizarTela();
-    </script>function fecharPainel() {
-    document.getElementById('adminPanel').style.display = 'none';
-}
+            
+            // Limpa a sequência se ficar muito grande
+            if (sequence.length > 20) sequence = "";
+        });
+    </script>
 </body>
 </html>
