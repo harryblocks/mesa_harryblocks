@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA DE VOTAÇÃO MESA</title>
+    <title id="pageTitle">SISTEMA DE VOTAÇÃO MESA</title>
     <style>
         body {
             background-color: #f0f0f0;
@@ -15,6 +15,7 @@
             min-height: 100vh;
             margin: 0;
             padding-top: 20px;
+            transition: background 0.3s;
         }
 
         h1 {
@@ -23,12 +24,6 @@
             color: #333;
             font-size: 2.5rem;
             margin-bottom: 10px;
-        }
-
-        /* Botão Control Z no topo */
-        .top-buttons {
-            display: flex;
-            margin-bottom: 20px;
         }
 
         .btn-controlz {
@@ -43,9 +38,9 @@
             align-items: center;
             gap: 8px;
             font-size: 1rem;
+            margin-bottom: 20px;
         }
 
-        /* Quadro de Estatísticas na Tela Principal */
         .stats-box {
             background: white;
             border-radius: 15px;
@@ -57,15 +52,10 @@
             margin-bottom: 30px;
         }
 
-        .stats-box h2 { font-size: 1.2rem; margin-top: 0; }
         .main-stats { font-size: 1.3rem; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
         .sub-stats { font-size: 1rem; color: #555; line-height: 1.6; }
 
-        /* Área de Votação */
-        .voting-area {
-            display: flex;
-            gap: 40px;
-        }
+        .voting-area { display: flex; gap: 40px; }
 
         .vote-card {
             background: white;
@@ -82,7 +72,6 @@
         .vote-card img { width: 150px; height: 150px; object-fit: contain; }
         .vote-card p { font-weight: bold; margin-top: 15px; font-size: 1.2rem; }
 
-        /* Modais */
         .modal {
             display: none;
             position: fixed;
@@ -99,41 +88,24 @@
         }
 
         .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .modal-buttons button {
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            background: #eee;
-            cursor: pointer;
-            font-weight: bold;
-        }
+        .modal-buttons button { padding: 12px; border: none; border-radius: 5px; background: #eee; cursor: pointer; font-weight: bold; }
 
-        /* Estilo do Painel Admin Secreto */
-        #adminPanel {
-            border: 3px solid #333;
-        }
-        .close-admin {
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            float: right;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-        }
+        /* Estilo do Painel Admin */
+        #adminPanel { border: 3px solid #333; width: 400px; }
+        .admin-option { margin-bottom: 15px; text-align: left; border-top: 1px solid #eee; padding-top: 10px; }
+        .admin-option label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
+        .admin-option input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .close-admin { background: #ff4444; color: white; border: none; padding: 8px 15px; float: right; cursor: pointer; border-radius: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>MESA - CORRETO OU ERRADO?</h1>
+    <h1 id="mainDisplayTitle">MESA - CORRETO OU ERRADO?</h1>
 
-    <div class="top-buttons">
-        <button class="btn-controlz" onclick="undo()">↩️ Control Z</button>
-    </div>
+    <button class="btn-controlz" onclick="undo()">↩️ Control Z</button>
 
     <div class="stats-box">
-        <h2>Estatísticas</h2>
         <div class="main-stats">
             ✅ Sim: <span id="s-sim">0</span> | ❌ Não: <span id="s-nao">0</span>
         </div>
@@ -148,7 +120,6 @@
             <img src="like.png" alt="Correto">
             <p>CORRETO</p>
         </div>
-
         <div class="vote-card" onclick="mostrarMotivos()">
             <img src="6323-dislikebs.png" alt="Errado">
             <p>ERRADO</p>
@@ -169,15 +140,36 @@
 
     <div id="adminPanel" class="modal">
         <button class="close-admin" onclick="fecharAdmin()">SAIR</button>
-        <img src="hacker options sigma.png" style="width: 70px; margin-top: 20px;">
+        <img src="hacker options sigma.png" style="width: 60px; margin-top: 10px;">
         <h3>PAINEL HACKER</h3>
-        <p>Acesso Restrito ao Administrador</p>
-        <button onclick="resetarTudo()" style="background: black; color: white; width: 100%; padding: 15px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold;">Zerar Banco de Dados</button>
+        
+        <div class="admin-option">
+            <label>RENOMEAR PÁGINA:</label>
+            <input type="text" id="newTitleInput" placeholder="Digite o novo título..." oninput="changeTitle(this.value)">
+        </div>
+
+        <div class="admin-option">
+            <label>COR DE FUNDO (HEX):</label>
+            <input type="text" id="bgColorInput" placeholder="#f0f0f0" oninput="changeBgColor(this.value)">
+        </div>
+
+        <button onclick="resetarTudo()" style="background: black; color: white; width: 100%; padding: 12px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">ZERAR TODOS OS VOTOS</button>
     </div>
 
     <script>
-        let dados = { sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0 };
+        // Carregar dados ou iniciar do zero
+        let dados = JSON.parse(localStorage.getItem('mesa_dados')) || { 
+            sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
+            titulo: "MESA - CORRETO OU ERRADO?",
+            corFundo: "#f0f0f0"
+        };
+        
         let historico = [];
+
+        function salvarDados() {
+            localStorage.setItem('mesa_dados', JSON.stringify(dados));
+            atualizarInterface();
+        }
 
         function atualizarInterface() {
             document.getElementById('s-sim').innerText = dados.sim;
@@ -186,12 +178,16 @@
             document.getElementById('s-montagem').innerText = dados.montagem;
             document.getElementById('s-variacao').innerText = dados.variacao;
             document.getElementById('s-soltagem').innerText = dados.soltagem;
+            
+            document.getElementById('mainDisplayTitle').innerText = dados.titulo;
+            document.getElementById('pageTitle').innerText = dados.titulo;
+            document.body.style.backgroundColor = dados.corFundo;
         }
 
         function votarSim() {
             dados.sim++;
             historico.push('sim');
-            atualizarInterface();
+            salvarDados();
         }
 
         function mostrarMotivos() { document.getElementById('modalMotivos').style.display = 'block'; }
@@ -202,7 +198,7 @@
             dados[motivo]++;
             historico.push(motivo);
             fecharModal();
-            atualizarInterface();
+            salvarDados();
         }
 
         function undo() {
@@ -210,27 +206,33 @@
             if (!ultimo) return;
             if (ultimo === 'sim') { dados.sim--; } 
             else { dados.nao--; dados[ultimo]--; }
-            atualizarInterface();
+            salvarDados();
         }
 
-        function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+        // Funções do Painel Hacker
+        function changeTitle(val) {
+            dados.titulo = val || "MESA - CORRETO OU ERRADO?";
+            salvarDados();
+        }
 
-        function resetarTudo() {
-            if(confirm("Tem certeza que deseja apagar todos os registros permanentemente?")) {
-                dados = { sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0 };
-                historico = [];
-                atualizarInterface();
-                fecharAdmin();
+        function changeBgColor(val) {
+            if(val.length >= 4) {
+                dados.corFundo = val;
+                salvarDados();
             }
         }
 
-        // Sistema de Segredo
+        function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+        function resetarTudo() {
+            if(confirm("Deseja apagar TUDO?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
         let segredo = "";
         document.addEventListener('keydown', (e) => {
-            // Atalho Ctrl+Z
             if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
-
-            // Digitar "harry blocks"
             segredo += e.key.toLowerCase();
             if (segredo.includes("harryblocks") || segredo.includes("harry blocks")) {
                 document.getElementById('adminPanel').style.display = 'block';
@@ -238,6 +240,9 @@
             }
             if (segredo.length > 20) segredo = "";
         });
+
+        // Inicializa a tela com os dados salvos
+        atualizarInterface();
     </script>
 </body>
 </html>
