@@ -14,6 +14,7 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
 
         h1 {
@@ -62,7 +63,22 @@
             margin-top: 10px;
         }
 
-        /* Estilo do Painel de Admin */
+        /* Modal de Motivos */
+        #modalErro {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 2px solid red;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            z-index: 2000;
+            text-align: center;
+        }
+
+        /* Painel de Admin */
         #adminPanel {
             display: none;
             position: fixed;
@@ -90,22 +106,7 @@
             font-weight: bold;
         }
 
-        .close-btn:hover {
-            background: #cc0000;
-        }
-
-        #hackerImage {
-            width: 100px;
-            display: block;
-            margin: 0 auto 20px;
-        }
-
-        .admin-title {
-            text-align: center;
-            font-weight: bold;
-            text-decoration: underline;
-            margin-bottom: 20px;
-        }
+        .admin-title { font-weight: bold; text-decoration: underline; margin-bottom: 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -116,78 +117,84 @@
         <div class="options">
             <div class="card" onclick="votar('correto')">
                 <img src="like.png" alt="Correto">
-                <div class="counter">Correto: <span id="countCorreto">0</span></div>
+                <div class="counter">CORRETO: <span id="countCorreto">0</span></div>
             </div>
             
-            <div class="card" onclick="votar('errado')">
+            <div class="card" onclick="abrirMotivos()">
                 <img src="6323-dislikebs.png" alt="Errado">
-                <div class="counter">Errado: <span id="countErrado">0</span></div>
+                <div class="counter">ERRADO: <span id="countErrado">0</span></div>
             </div>
         </div>
     </div>
 
-    <!-- Painel de Admin Oculto -->
+    <div id="modalErro">
+        <img src="2e82eda13b1ad2f508a6651858124034.png" style="width: 250px; margin-bottom: 10px;">
+        <h3>POR QUE ESTÁ ERRADO?</h3>
+        <button onclick="confirmarErro('Mesa torta')">Mesa torta</button>
+        <button onclick="confirmarErro('Falta peça')">Falta peça</button>
+        <button onclick="confirmarErro('Cor errada')">Cor errada</button>
+    </div>
+
     <div id="adminPanel">
         <button class="close-btn" onclick="fecharPainel()">X</button>
-        <img id="hackerImage" src="hacker options sigma.png" alt="Admin">
+        <img src="hacker options sigma.png" style="width: 80px; display: block; margin: 0 auto;">
         <div class="admin-title">PAINEL DE ADMINISTRAÇÃO</div>
-        
-        <p>Total de votos computados:</p>
-        <ul>
-            <li>Positivos: <span id="adminCorreto">0</span></li>
-            <li>Negativos: <span id="adminErrado">0</span></li>
-        </ul>
-        <button onclick="resetarVotos()" style="width: 100%; padding: 10px; cursor: pointer;">RESETAR DADOS</button>
+        <p>Positivos: <span id="adminCorreto">0</span></p>
+        <p>Negativos: <span id="adminErrado">0</span></p>
+        <button onclick="resetarVotos()" style="width: 100%;">RESETAR TUDO</button>
     </div>
 
     <script>
-        // Sistema de Votos
-        let votos = {
-            correto: 0,
-            errado: 0
-        };
+        let votos = { correto: 0, errado: 0 };
+        let historico = [];
 
         function votar(tipo) {
             votos[tipo]++;
+            historico.push(tipo);
             atualizarTela();
+        }
+
+        function abrirMotivos() {
+            document.getElementById('modalErro').style.display = 'block';
+        }
+
+        function confirmarErro(motivo) {
+            votar('errado');
+            console.log("Motivo registrado: " + motivo);
+            document.getElementById('modalErro').style.display = 'none';
         }
 
         function atualizarTela() {
             document.getElementById('countCorreto').innerText = votos.correto;
             document.getElementById('countErrado').innerText = votos.errado;
-            // Atualiza o painel de admin também
             document.getElementById('adminCorreto').innerText = votos.correto;
             document.getElementById('adminErrado').innerText = votos.errado;
         }
 
-        function resetarVotos() {
-            if(confirm("Deseja mesmo apagar todos os votos?")) {
-                votos.correto = 0;
-                votos.errado = 0;
-                atualizarTela();
-            }
+        function fecharPainel() { document.getElementById('adminPanel').style.display = 'none'; }
+        
+        function resetarVotos() { 
+            if(confirm("Zerar tudo?")) { votos = {correto:0, errado:0}; historico = []; atualizarTela(); } 
         }
 
-        function fecharPainel() {
-            document.getElementById('adminPanel').style.display = 'none';
-        }
-
-        // Sistema de Código Secreto "harry blocks"
+        // CONTROL + Z e CÓDIGO SECRETO
         let sequence = "";
-        const secretCode = "harryblocks"; // sem espaço para facilitar a detecção
-
         document.addEventListener('keydown', (e) => {
-            // Remove espaços da entrada para evitar erros de digitação
-            if(e.key === " ") return;
-            
-            sequence += e.key.toLowerCase();
-            
-            if (sequence.includes(secretCode)) {
-                document.getElementById('adminPanel').style.display = 'block';
-                sequence = ""; // Reseta a sequência
+            // Control + Z
+            if (e.ctrlKey && e.key === 'z') {
+                let ultimo = historico.pop();
+                if (ultimo) {
+                    votos[ultimo]--;
+                    atualizarTela();
+                }
             }
-            
-            // Limpa a sequência se ficar muito grande
+
+            // Código harryblocks
+            sequence += e.key.toLowerCase();
+            if (sequence.includes("harryblocks")) {
+                document.getElementById('adminPanel').style.display = 'block';
+                sequence = "";
+            }
             if (sequence.length > 20) sequence = "";
         });
     </script>
