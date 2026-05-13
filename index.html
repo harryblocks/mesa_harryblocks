@@ -6,107 +6,119 @@
     <title id="pageTitle">SISTEMA DE VOTAÇÃO MESA</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --hacker-green: #00ff41; }
+        :root { 
+            --hacker-green: #00ff41; 
+            --soft-red: #ff4444;
+            --soft-green: #00c851;
+        }
         
         body {
             background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding-top: 20px;
+            padding-top: 15px;
             transition: all 0.3s;
             overflow-x: hidden;
+            font-size: 14px; /* Fonte reduzida */
         }
 
         h1 {
             font-family: "Times New Roman", Times, serif;
             text-transform: uppercase;
             color: #333;
-            font-size: 2.8rem;
-            margin-bottom: 10px;
+            font-size: 1.8rem; /* Fonte reduzida */
+            margin-bottom: 5px;
         }
 
-        /* Barra de Aproveitamento com Degradê Dinâmico */
+        /* Barra de Aproveitamento Estilo Vida */
         .progress-container {
-            width: 80%;
-            max-width: 500px;
-            background: #333;
-            height: 30px;
-            border-radius: 50px;
-            margin-bottom: 10px;
+            width: 85%;
+            max-width: 450px;
+            background: var(--soft-red); /* Lado do NÃO (Fundo) */
+            height: 25px;
+            border-radius: 8px;
+            margin-bottom: 5px;
             overflow: hidden;
-            border: 3px solid #000;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+            border: 2px solid #000;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+            position: relative;
         }
         
         #progressBar {
             height: 100%;
             width: 0%;
-            /* O degradê será controlado via JS para mudar de Vermelho -> Amarelo -> Verde */
-            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
-            background-size: 500px 30px; 
-            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: var(--soft-green); /* Lado do SIM (Preenchimento) */
+            transition: width 0.5s ease-out;
+        }
+
+        .reasons-container {
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
         }
 
         .stats-box {
             background: white;
-            border-radius: 15px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 15px;
             width: 80%;
-            max-width: 500px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
-        .voting-area { display: flex; gap: 40px; }
+        .voting-area { display: flex; gap: 20px; }
 
         .vote-card {
             background: white;
-            padding: 25px;
-            border-radius: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            width: 220px;
+            transition: all 0.2s ease;
+            width: 150px;
         }
 
-        .vote-card:hover { transform: translateY(-10px); }
-        .vote-card img { width: 160px; height: 160px; object-fit: contain; }
+        .vote-card:hover { transform: scale(1.05); }
+        .vote-card img { width: 100px; height: 100px; object-fit: contain; }
+        .vote-card p { font-weight: bold; margin-top: 10px; font-size: 0.9rem; }
 
-        /* PAINEL HACKER */
+        /* PAINEL HACKER ATUALIZADO */
         #adminPanel { 
-            background: rgba(0, 0, 0, 0.98);
+            background: rgba(0, 0, 0, 0.95);
             color: var(--hacker-green);
             border: 2px solid var(--hacker-green);
             font-family: 'Courier New', monospace;
-            width: 450px;
+            width: 400px;
             z-index: 5000;
+            padding: 20px;
+        }
+
+        .hacker-img {
+            width: 100%;
+            max-height: 150px;
+            object-fit: cover;
+            border: 1px solid var(--hacker-green);
+            margin-bottom: 10px;
         }
 
         canvas#matrix {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
-            opacity: 0.2;
+            opacity: 0.15;
         }
 
-        /* Color Picker Estilo Roda Permanente */
-        #colorWheel {
-            width: 100%;
-            height: 100px;
-            cursor: pointer;
-            border: 2px solid var(--hacker-green);
-            background: none;
-            margin-top: 10px;
-        }
-
-        /* Overlay do Vídeo Protocolo 67 */
-        #videoOverlay {
+        /* Overlay do Vídeo/Easter Eggs */
+        #mediaOverlay {
             display: none;
             position: fixed;
             top: 0; left: 0;
@@ -114,7 +126,7 @@
             background: black;
             z-index: 9999;
         }
-        #videoOverlay video { width: 100%; height: 100%; object-fit: contain; }
+        #mediaOverlay video { width: 100%; height: 100%; object-fit: contain; }
 
         @keyframes shake {
             0% { transform: translate(1px, 1px); }
@@ -124,79 +136,89 @@
 
         .btn-adm {
             width: 100%;
-            padding: 10px;
-            margin-top: 10px;
+            padding: 8px;
+            margin-top: 8px;
             cursor: pointer;
             font-weight: bold;
             border: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
         }
 
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px; border-radius: 15px; text-align: center; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 15px; text-align: center; }
     </style>
 </head>
 <body>
 
     <audio id="soundAcerto" src="acerto.mp3"></audio>
     <audio id="soundErro" src="erro.mp3"></audio>
+    <audio id="sound42" src="42tuff.mp3"></audio>
 
-    <div id="videoOverlay">
-        <video id="vid67" src="67.mp4"></video> </div>
+    <div id="mediaOverlay">
+        <video id="videoElement"></video>
+    </div>
 
     <h1 id="mainDisplayTitle">MESA - CORRETO OU ERRADO?</h1>
     
-    <button style="background:#ffc107; border:none; padding:10px; border-radius:5px; cursor:pointer; font-weight:bold;" onclick="undo()">↩️ DESFAZER (CTRL+Z)</button>
+    <button style="background:#ffc107; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:bold; font-size: 0.7rem;" onclick="undo()">↩️ DESFAZER (CTRL+Z)</button>
 
     <div class="progress-container" style="margin-top:20px;">
         <div id="progressBar"></div>
     </div>
-    <div style="font-weight: bold; margin-bottom: 20px;">TAXA DE SUCESSO: <span id="percentText">0%</span></div>
+    <div style="font-weight: bold; margin-bottom: 5px; font-size: 0.9rem;">TAXA DE SUCESSO: <span id="percentText">0%</span></div>
+    
+    <div class="reasons-container">
+        ⚠️ MOTIVOS DO "NÃO": 
+        PROG: <span id="s-programacao">0</span> | 
+        MONT: <span id="s-montagem">0</span> | 
+        VAR: <span id="s-variacao">0</span> | 
+        SOLT: <span id="s-soltagem">0</span>
+    </div>
 
     <div class="stats-box">
-        <div style="font-size: 1.5rem; margin-bottom: 10px;">
+        <div style="font-size: 1.2rem; font-weight: bold;">
             ✅ <span id="s-sim">0</span> | ❌ <span id="s-nao">0</span>
-        </div>
-        <div style="color: #666; font-size: 0.9rem;">
-            PROGRAMAÇÃO: <span id="s-programacao">0</span> | MONTAGEM: <span id="s-montagem">0</span> | VARIAÇÃO: <span id="s-variacao">0</span> | SOLTAGEM: <span id="s-soltagem">0</span>
         </div>
     </div>
 
     <div class="voting-area">
         <div class="vote-card" onclick="votarSim()">
-            <img src="like.png">
+            <img src="like.png" alt="Sim">
             <p>CORRETO</p>
         </div>
         <div class="vote-card" onclick="mostrarMotivos()">
-            <img src="6323-dislikebs.png">
+            <img src="6323-dislikebs.png" alt="Não">
             <p>ERRADO</p>
         </div>
     </div>
 
     <div id="adminPanel" class="modal">
         <canvas id="matrix"></canvas>
-        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer; padding:5px;">SAIR</button>
-        <h3>CONFIGURAÇÕES DO SISTEMA</h3>
+        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer; padding:5px; border-radius:3px;">X</button>
+        <h3>SISTEMA HACKER</h3>
+        
+        <img src="hacker-sigma.png" alt="Hacker Sigma" class="hacker-img" onerror="this.src='https://via.placeholder.com/400x150/000/00FF41?text=HACKER+SIGMA'">
         
         <div style="text-align: left;">
-            <label>NOME DA PÁGINA:</label>
-            <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="width:95%; background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px;">
+            <label style="font-size: 0.7rem;">NOME DA PÁGINA:</label>
+            <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="width:95%; background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px; margin-bottom:10px;">
             
-            <label style="display:block; margin-top:15px;">COR DE FUNDO (SELECIONE NA RODA):</label>
-            <input type="color" id="colorWheel" oninput="changeBgColor(this.value)">
+            <label style="display:block; font-size: 0.7rem;">COR DE FUNDO:</label>
+            <input type="color" id="colorWheel" oninput="changeBgColor(this.value)" style="width:100%; height:40px; cursor:pointer; background:none; border:1px solid var(--hacker-green);">
         </div>
 
-        <button onclick="executar67()" class="btn-adm" style="background:#ff4444; color:white;">ATIVAR PROTOCOLO 67</button>
-        <button onclick="resetarTudo()" class="btn-adm" style="background:var(--hacker-green); color:black;">REINICIAR BANCO DE DADOS</button>
+        <button onclick="resetarTudo()" class="btn-adm" style="background:var(--hacker-green); color:black;">REINICIAR DATABASE</button>
     </div>
 
-    <div id="modalMotivos" class="modal" style="background:white; width:350px; color:black; box-shadow:0 0 20px rgba(0,0,0,0.5);">
-        <h3>QUAL O MOTIVO?</h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <button onclick="votarNao('programacao')" style="padding:10px;">Programação</button>
-            <button onclick="votarNao('montagem')" style="padding:10px;">Montagem</button>
-            <button onclick="votarNao('variacao')" style="padding:10px;">Variação</button>
-            <button onclick="votarNao('soltagem')" style="padding:10px;">Soltagem</button>
+    <div id="modalMotivos" class="modal" style="background:white; width:300px; color:black; box-shadow:0 0 20px rgba(0,0,0,0.5); padding: 20px;">
+        <h3 style="font-size: 1rem;">QUAL O MOTIVO?</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button onclick="votarNao('programacao')" style="padding:8px; font-size: 0.7rem;">Programação</button>
+            <button onclick="votarNao('montagem')" style="padding:8px; font-size: 0.7rem;">Montagem</button>
+            <button onclick="votarNao('variacao')" style="padding:8px; font-size: 0.7rem;">Variação</button>
+            <button onclick="votarNao('soltagem')" style="padding:8px; font-size: 0.7rem;">Soltagem</button>
         </div>
-        <button onclick="document.getElementById('modalMotivos').style.display='none'" style="margin-top:15px; color:red; border:none; background:none; cursor:pointer;">CANCELAR</button>
+        <button onclick="document.getElementById('modalMotivos').style.display='none'" style="margin-top:15px; color:red; border:none; background:none; cursor:pointer; font-size: 0.8rem;">CANCELAR</button>
     </div>
 
     <script>
@@ -205,6 +227,7 @@
             titulo: "MESA - CORRETO OU ERRADO?", corFundo: "#f0f0f0"
         };
         let historico = [];
+        let inputBuffer = "";
 
         function salvar() {
             localStorage.setItem('mesa_final_v3', JSON.stringify(dados));
@@ -221,23 +244,17 @@
             document.getElementById('mainDisplayTitle').innerText = dados.titulo;
             document.body.style.backgroundColor = dados.corFundo;
 
-            // Lógica da Barra de Progresso com Degradê
             let total = dados.sim + dados.nao;
             let perc = total === 0 ? 0 : Math.round((dados.sim / total) * 100);
+            
             const bar = document.getElementById('progressBar');
             bar.style.width = perc + "%";
             document.getElementById('percentText').innerText = perc + "%";
-
-            // Muda a cor da barra baseado na porcentagem (Vermelho -> Verde)
-            let red = perc < 50 ? 255 : Math.floor(255 - (perc - 50) * 5.1);
-            let green = perc > 50 ? 255 : Math.floor(perc * 5.1);
-            bar.style.backgroundColor = `rgb(${red}, ${green}, 0)`;
-            bar.style.background = `linear-gradient(90deg, rgb(${red}, ${green}, 0), #00ff41)`;
         }
 
         function votarSim() {
             document.getElementById('soundAcerto').play();
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            confetti({ particleCount: 100, spread: 60, origin: { y: 0.7 } });
             dados.sim++;
             historico.push('sim');
             salvar();
@@ -267,34 +284,53 @@
         function changeBgColor(v) { dados.corFundo = v; salvar(); }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
 
-        // Protocolo 67
-        function executar67() {
-            const overlay = document.getElementById('videoOverlay');
-            const video = document.getElementById('vid67');
+        // Sistema de Easter Eggs por Teclado
+        document.addEventListener('keydown', (e) => {
+            if(e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+            
+            inputBuffer += e.key.toLowerCase();
+            if(inputBuffer.length > 15) inputBuffer = inputBuffer.substring(1);
+
+            // Easter Egg: 67
+            if(inputBuffer.endsWith("67")) {
+                playMedia("67.mp4");
+                inputBuffer = "";
+            }
+            // Easter Egg: 42
+            if(inputBuffer.endsWith("42")) {
+                document.getElementById('sound42').play();
+                inputBuffer = "";
+            }
+            // Easter Egg: mustard
+            if(inputBuffer.endsWith("mustard")) {
+                playMedia("mustardtuff.mp4"); // Alterado para .mp4 para funcionar como vídeo
+                inputBuffer = "";
+            }
+            // Painel Hacker
+            if(inputBuffer.includes("harryblocks")) {
+                document.getElementById('adminPanel').style.display = 'block';
+                startMatrix();
+                inputBuffer = "";
+            }
+        });
+
+        function playMedia(file) {
+            const overlay = document.getElementById('mediaOverlay');
+            const video = document.getElementById('videoElement');
             overlay.style.display = 'block';
-            video.play();
+            video.src = file;
+            video.play().catch(e => console.log("Erro ao tocar media: ", e));
+            
             video.onended = () => overlay.style.display = 'none';
-            // Para sair do vídeo antes de acabar, basta clicar na tela
             overlay.onclick = () => { overlay.style.display = 'none'; video.pause(); };
         }
 
         function resetarTudo() { if(confirm("REINICIAR SISTEMA?")) { localStorage.clear(); location.reload(); } }
 
-        let s = "";
-        document.addEventListener('keydown', (e) => {
-            if(e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
-            s += e.key.toLowerCase();
-            if(s.includes("harryblocks") || s.includes("harry blocks")) {
-                document.getElementById('adminPanel').style.display = 'block';
-                startMatrix();
-                s = "";
-            }
-        });
-
         function startMatrix() {
             const canvas = document.getElementById('matrix');
             const ctx = canvas.getContext('2d');
-            canvas.width = 450; canvas.height = 400;
+            canvas.width = 400; canvas.height = 400;
             const letters = "01";
             const fontSize = 10;
             const columns = canvas.width / fontSize;
