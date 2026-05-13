@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="tab-title">mesa - correto ou errado?</title>
     <style>
-        /* Mudança de Fonte do Título */
-        h1 { 
-            font-family: "Comic Sans MS", "Comic Sans", cursive; 
-            color: #1a1a1a; 
-            margin-top: 40px; 
-            text-transform: lowercase; 
-        }
+       body {
+    /* Troca a Comic Sans por Times New Roman */
+    font-family: "Times New Roman", Times, serif;
+}
+
+h1 {
+    /* Título em MAIÚSCULO */
+    text-transform: uppercase;
+    font-family: "Times New Roman", Times, serif;
+}
 
         body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
         
@@ -61,6 +64,10 @@
         <input type="text" id="new-name-input" placeholder="Renomear site...">
         <button class="btn-rename" onclick="renomearSite()">EXECUTAR RENOMEAÇÃO</button>
         <button class="btn-reset" onclick="resetar()">DELETAR REGISTROS</button>
+        <div id="adminPanel" style="display:none; position:fixed; top:20%; left:30%; background:white; border:2px solid black; padding:20px; z-index:1000;">
+    <button onclick="fecharPainel()" style="float:right; cursor:pointer;">X</button>
+    <h2>PAINEL DE CONTROLE</h2>
+    </div>
     </div>
 
     <div id="display-resultados">
@@ -179,6 +186,8 @@
         }
 
         atualizarTela();
-    </script>
+    </script>function fecharPainel() {
+    document.getElementById('adminPanel').style.display = 'none';
+}
 </body>
 </html>
