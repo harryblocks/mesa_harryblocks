@@ -85,16 +85,18 @@
             width: 100vw; height: 100vh; background: black; z-index: 20000;
         }
 
-        /* NOVO: CSS PARA O OVERLAY DO DOOM */
+        /* OVERLAY DO DOOM (POP-UP INTERNO) */
         #doomOverlay {
             display: none; position: fixed; top: 0; left: 0; 
             width: 100vw; height: 100vh; background: black; z-index: 25000;
         }
         #doomCloseBtn {
-            position: absolute; top: 10px; right: 20px; 
+            position: absolute; top: 15px; right: 25px; 
             background: #ff4444; color: white; border: none; 
-            padding: 10px 15px; font-weight: bold; border-radius: 5px; 
+            padding: 12px 20px; font-weight: bold; border-radius: 5px; 
             cursor: pointer; z-index: 26000; font-family: sans-serif;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-size: 1rem;
         }
         #doomCloseBtn:hover { background: #cc0000; }
 
@@ -116,7 +118,6 @@
         <img id="imageElement" style="width:100%; height:100%; object-fit:contain; display:none;">
     </div>
 
-    <!-- NOVO: ESTRUTURA PARA O EMULADOR DO DOOM -->
     <div id="doomOverlay">
         <button id="doomCloseBtn" onclick="fecharDoom()">SAIR DO DOOM [X]</button>
         <iframe id="doomFrame" src="" style="width:100%; height:100%; border:none;"></iframe>
@@ -601,60 +602,46 @@
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
         function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
-        // NOVO: FUNÇÕES PARA CONTROLAR O EMULADOR DO DOOM
+        // EXECUTAR SITE E CONTROLAR O POP-UP NAVEGADOR DO DOOM
         function abrirDoom() {
             const overlay = document.getElementById('doomOverlay');
             const frame = document.getElementById('doomFrame');
-            // Emulador público do shareware original via JS-DOS
+            // Carrega o site de emulação direta dentro do nosso iframe (Pop-up interno)
             frame.src = "https://dos.zone/player/?bundleUrl=https%3A%2F%2Fcdn.dos.zone%2Fcustom%2Fdos%2Fdoom.jsdos";
             overlay.style.display = 'block';
-            frame.focus(); // Coloca o foco no jogo para o teclado responder imediatamente
+            frame.focus(); // Direciona o foco para que os comandos de teclado funcionem de imediato no jogo
         }
 
         function fecharDoom() {
             const overlay = document.getElementById('doomOverlay');
             const frame = document.getElementById('doomFrame');
-            frame.src = ""; // Reseta a URL para parar o áudio/processamento do jogo
+            frame.src = ""; // Reseta o endereço para interromper totalmente a execução e o áudio do site em segundo plano
             overlay.style.display = 'none';
         }
 
-        document.addEventListener('keydown', (e) => {
-            inputBuffer += e.key.toLowerCase();
-            if(inputBuffer.endsWith("harryblocks")) abrirAdmin();
-            if(inputBuffer.endsWith("67")) playMedia('67.mp4', 'video');
-            if(inputBuffer.endsWith("tttt")) { try { document.getElementById('soundTibas').play(); }catch(e){} playMedia('tttt.jpg', 'image'); }
-            
-            // CORREÇÃO DO EASTER EGG: eladesielasobi -> Chamando cr7siusigma.mp4
-            if(inputBuffer.endsWith("eladesielasobi")) playMedia('cr7siusigma.mp4', 'video');
-            
-            // NOVO: GATILHO PARA O JOGO DOOM
-            if(inputBuffer.endsWith("doom")) abrirDoom();
-            
-            if(inputBuffer.length > 30) inputBuffer = inputBuffer.substring(1);
+        // CAPTURA DA PALAVRA SECRETA "DOOM" NO TECLADO
+        document.addEventListener('keydown', function(event) {
+            // Se o usuário estiver digitando dentro de algum input ou select legítimo da página, não ativa o jogo
+            if (event.target.tagName === "INPUT" || event.target.tagName === "SELECT") {
+                return;
+            }
+
+            // Adiciona a tecla digitada (em minúsculo) à nossa memória temporária
+            inputBuffer += event.key.toLowerCase();
+
+            // Garante que a memória armazene apenas os últimos 4 caracteres necessários
+            if (inputBuffer.length > 4) {
+                inputBuffer = inputBuffer.slice(-4);
+            }
+
+            // Valida se a palavra digitada corresponde ao easter egg
+            if (inputBuffer === "doom") {
+                abrirDoom();
+                inputBuffer = ""; // Limpa a memória após executar
+            }
         });
 
-        function playMedia(file, type) {
-            const ov = document.getElementById('mediaOverlay');
-            if(type === 'video') {
-                document.getElementById('videoElement').src = file;
-                document.getElementById('videoElement').play().catch(e=>{});
-                document.getElementById('videoElement').style.display = 'block';
-                document.getElementById('imageElement').style.display = 'none';
-            } else {
-                document.getElementById('imageElement').src = file;
-                document.getElementById('imageElement').style.display = 'block';
-                document.getElementById('videoElement').style.display = 'none';
-            }
-            ov.style.display = 'block';
-        }
-        
-        function fecharMedia() { 
-            document.getElementById('mediaOverlay').style.display = 'none';
-            document.getElementById('videoElement').pause();
-            try { document.getElementById('soundTibas').pause(); } catch(e){}
-        }
-
-        // Executa ao iniciar
+        // Inicializa o carregamento da página com as variáveis corretas
         atualizar();
     </script>
 </body>
