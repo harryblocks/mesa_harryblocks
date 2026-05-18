@@ -6,6 +6,9 @@
     <title id="pageTitle">SISTEMA DE MISSÕES MESA</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    
+    <script type="text/javascript" src="https://js-dos.com/cdn/js-dos-api.js"></script>
+
     <style>
         :root { 
             --hacker-green: #00ff41; 
@@ -85,20 +88,33 @@
             width: 100vw; height: 100vh; background: black; z-index: 20000;
         }
 
-        /* OVERLAY DO DOOM (POP-UP INTERNO) */
+        /* OVERLAY DO POP-UP NAVEGADOR DO JOGO (DOOM) */
         #doomOverlay {
             display: none; position: fixed; top: 0; left: 0; 
-            width: 100vw; height: 100vh; background: black; z-index: 25000;
+            width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.95); z-index: 25000;
+        }
+        .doom-conteudo {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%; position: relative;
         }
         #doomCloseBtn {
-            position: absolute; top: 15px; right: 25px; 
+            position: absolute; top: 20px; right: 25px; 
             background: #ff4444; color: white; border: none; 
-            padding: 12px 20px; font-weight: bold; border-radius: 5px; 
+            padding: 12px 24px; font-weight: bold; border-radius: 5px; 
             cursor: pointer; z-index: 26000; font-family: sans-serif;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            font-size: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-size: 1rem;
+            text-transform: uppercase;
         }
         #doomCloseBtn:hover { background: #cc0000; }
+
+        /* Container clássico js-dos integrado de forma responsiva no pop-up */
+        .dosbox-container { 
+            width: 640px; height: 400px; max-width: 90%; max-height: 80%;
+            border: 4px solid #444; background: #000;
+        }
+        .dosbox-container > .dosbox-overlay { 
+            background: url(https://js-dos.com/cdn/DOOM.png) center center / cover; 
+        }
 
         @keyframes shake {
             0% { transform: translate(1px, 1px); }
@@ -119,8 +135,10 @@
     </div>
 
     <div id="doomOverlay">
-        <button id="doomCloseBtn" onclick="fecharDoom()">SAIR DO DOOM [X]</button>
-        <iframe id="doomFrame" src="" style="width:100%; height:100%; border:none;"></iframe>
+        <div class="doom-conteudo">
+            <button id="doomCloseBtn" onclick="fecharDoom()">SAIR DO JOGO [X]</button>
+            <div id="dosbox" class="dosbox-container"></div>
+        </div>
     </div>
 
     <h1 id="mainDisplayTitle" onclick="clickAdmin()">MESA - CONTROLE DE MISSÕES</h1>
@@ -312,6 +330,7 @@
         }
 
         let inputBuffer = "";
+        var dosboxInstance = null; // Guardará a instância ativa do emulador do script js-dos
 
         const selectMissao = document.getElementById('infoMissao');
         for(let i=1; i<=15; i++) {
@@ -432,7 +451,7 @@
             const novoRegistro = {
                 missao: storage.configAtual.missao,
                 resultado: "ERRO",
-                motivo: motivo.toUpperCase(),
+                motivo: motif.toUpperCase(),
                 tempo: "N/A",
                 data: storage.configAtual.data
             };
@@ -602,46 +621,56 @@
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
         function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
-        // EXECUTAR SITE E CONTROLAR O POP-UP NAVEGADOR DO DOOM
+        // INTEGRACAO: EXECUTAR O SCRIPT ENVIADO COMO POP-UP INTERNO
         function abrirDoom() {
-            const overlay = document.getElementById('doomOverlay');
-            const frame = document.getElementById('doomFrame');
-            // Carrega o site de emulação direta dentro do nosso iframe (Pop-up interno)
-            frame.src = "https://dos.zone/player/?bundleUrl=https%3A%2F%2Fcdn.dos.zone%2Fcustom%2Fdos%2Fdoom.jsdos";
-            overlay.style.display = 'block';
-            frame.focus(); // Direciona o foco para que os comandos de teclado funcionem de imediato no jogo
+            // 1. Torna a janela do pop-up visível na tela
+            document.getElementById('doomOverlay').style.display = 'block';
+
+            // 2. Executa a lógica de carregamento do script js-dos clássico enviado por si
+            dosboxInstance = new Dosbox({
+                id: "dosbox",
+                onload: function (dosbox) {
+                    dosbox.run("upload/DOOM-@evilution.zip", "./doom");
+                },
+                onrun: function (dosbox, app) {
+                    console.log("App '" + app + "' is runned");
+                }
+            });
         }
 
         function fecharDoom() {
-            const overlay = document.getElementById('doomOverlay');
-            const frame = document.getElementById('doomFrame');
-            frame.src = ""; // Reseta o endereço para interromper totalmente a execução e o áudio do site em segundo plano
-            overlay.style.display = 'none';
+            // 1. Oculta o Pop-up de navegação da interface
+            document.getElementById('doomOverlay').style.display = 'none';
+
+            // 2. Destrói o processo interno limpando o HTML para parar o áudio e jogo
+            const container = document.getElementById('dosbox');
+            if (container) {
+                container.innerHTML = ''; 
+            }
+            
+            // 3. Esvazia a instância ativa na memória
+            dosboxInstance = null;
         }
 
         // CAPTURA DA PALAVRA SECRETA "DOOM" NO TECLADO
         document.addEventListener('keydown', function(event) {
-            // Se o usuário estiver digitando dentro de algum input ou select legítimo da página, não ativa o jogo
             if (event.target.tagName === "INPUT" || event.target.tagName === "SELECT") {
                 return;
             }
 
-            // Adiciona a tecla digitada (em minúsculo) à nossa memória temporária
             inputBuffer += event.key.toLowerCase();
 
-            // Garante que a memória armazene apenas os últimos 4 caracteres necessários
             if (inputBuffer.length > 4) {
                 inputBuffer = inputBuffer.slice(-4);
             }
 
-            // Valida se a palavra digitada corresponde ao easter egg
             if (inputBuffer === "doom") {
                 abrirDoom();
-                inputBuffer = ""; // Limpa a memória após executar
+                inputBuffer = ""; 
             }
         });
 
-        // Inicializa o carregamento da página com as variáveis corretas
+        // Inicializa a página carregando o banco local
         atualizar();
     </script>
 </body>
