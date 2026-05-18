@@ -206,6 +206,7 @@
                 <option value="'Courier New', monospace">Courier New</option>
                 <option value="Impact, sans-serif">Impact</option>
                 <option value="Georgia, serif">Georgia</option>
+                <option value="'Comic Sans MS', 'Comic Sans', cursive">Comic Sans</option>
             </select>
             <label style="font-size:0.75rem; color:#fff;">Tamanho do Título (px):</label>
             <input type="number" id="sizeTitulo" oninput="changeFontProp('tituloFontSize', this.value + 'px')" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
@@ -220,6 +221,7 @@
                 <option value="'Courier New', monospace">Courier New</option>
                 <option value="Georgia, serif">Georgia</option>
                 <option value="system-ui, sans-serif">Padrão Sistema</option>
+                <option value="'Comic Sans MS', 'Comic Sans', cursive">Comic Sans</option>
             </select>
             <label style="font-size:0.75rem; color:#fff;">Tamanho Geral (px):</label>
             <input type="number" id="sizeGeral" oninput="changeFontProp('geralFontSize', this.value + 'px')" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
@@ -229,13 +231,20 @@
         <input type="color" oninput="changeBgColor(this.value)" style="height:35px; background:none; border:1px solid var(--hacker-green); padding: 0;">
         
         <div style="border: 1px dashed var(--hacker-green); padding: 10px; margin-top: 10px; border-radius: 5px;">
-            <h4 style="margin: 0 0 5px 0; font-size:0.9rem;">🖼️ IMAGEM DE FUNDO</h4>
-            <label style="font-size:0.75rem;">Link da Imagem (URL):</label>
-            <input type="text" id="bgUrlInput" placeholder="Cole o link http..." oninput="changeBgImage(this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green);">
+            <h4 style="margin: 0 0 5px 0; font-size:0.9rem;">🖼️ IMAGENS DE FUNDO</h4>
+            <label style="font-size:0.75rem;">Adicionar por Link (URL):</label>
+            <div style="display:flex; gap:5px; margin-bottom: 5px;">
+                <input type="text" id="bgUrlInput" placeholder="Cole o link http..." style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); margin:0;">
+                <button onclick="adicionarBgUrl()" style="background:var(--hacker-green); color:black; border:none; padding:0 12px; cursor:pointer; font-weight:bold; border-radius:3px;">+</button>
+            </div>
             
             <label style="font-size:0.75rem; display:block; margin-top:5px;">Ou buscar arquivo local:</label>
             <input type="file" id="bgFileInput" accept="image/*" onchange="uploadBgImage(this)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px;">
             
+            <label style="font-size:0.75rem; display:block; margin-top:8px; color:#fff; font-weight:bold;">Sua Galeria (Clique na foto para ativar):</label>
+            <div id="galeriaImagens" style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top:5px; max-height:110px; overflow-y:auto; background:#111; padding:6px; border-radius:3px; border:1px solid #444;">
+                </div>
+
             <label style="font-size:0.75rem; display:block; margin-top:8px; color:#fff;">Onde a imagem fica (Posição):</label>
             <select id="bgPositionInput" onchange="changeBgLayoutProp('bgPosition', this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
                 <option value="center">Centro</option>
@@ -253,30 +262,37 @@
                 <option value="auto">Tamanho Automático (Original)</option>
             </select>
 
-            <button onclick="removerBgImage()" style="background:#ff4444; color:white; border:none; padding:5px; width:100%; cursor:pointer; font-size:0.75rem; font-weight:bold; margin-top:8px; border-radius:3px;">REMOVER IMAGEM</button>
+            <button onclick="desativarBgImage()" style="background:#ff4444; color:white; border:none; padding:5px; width:100%; cursor:pointer; font-size:0.75rem; font-weight:bold; margin-top:8px; border-radius:3px;">DESATIVAR FUNDO ATUAL</button>
         </div>
 
         <button onclick="resetarTudo()" class="btn-main" style="background:red; margin-top:15px;">LIMPAR DATABASE</button>
     </div>
 
     <script>
-        // Banco de dados interno com suporte a fontes e propriedades de background
+        // Banco de dados com suporte a múltiplas imagens (imagensFundo)
         let storage = JSON.parse(localStorage.getItem('mesa_final_v6')) || { 
             sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
             titulo: "MESA - CONTROLE DE MISSÕES", corFundo: "#f0f0f0", imgFundo: "", registros: [],
             configAtual: null,
             tituloFontFamily: "'Times New Roman', serif", tituloFontSize: "32px",
             geralFontFamily: "'Segoe UI', sans-serif", geralFontSize: "16px",
-            bgPosition: "center", bgSize: "cover"
+            bgPosition: "center", bgSize: "cover",
+            imagensFundo: []
         };
         
-        // Garante compatibilidade caso carregue dados antigos do LocalStorage
+        // Garante a existência das chaves de listas e propriedades para migrações limpas
         if(!storage.tituloFontFamily) storage.tituloFontFamily = "'Times New Roman', serif";
         if(!storage.tituloFontSize) storage.tituloFontSize = "32px";
         if(!storage.geralFontFamily) storage.geralFontFamily = "'Segoe UI', sans-serif";
         if(!storage.geralFontSize) storage.geralFontSize = "16px";
         if(!storage.bgPosition) storage.bgPosition = "center";
         if(!storage.bgSize) storage.bgSize = "cover";
+        if(!storage.imagensFundo) storage.imagensFundo = [];
+        
+        // Se já existia uma imagem configurada previamente, migra para a lista de galeria
+        if(storage.imgFundo && !storage.imagensFundo.includes(storage.imgFundo)) {
+            storage.imagensFundo.push(storage.imgFundo);
+        }
 
         let inputBuffer = "";
 
@@ -304,7 +320,7 @@
             document.body.style.fontFamily = storage.geralFontFamily;
             document.body.style.fontSize = storage.geralFontSize;
 
-            // Gerenciador Avançado de Imagem de Fundo / Cor de Fundo
+            // Renderizador do Fundo Ativo
             if (storage.imgFundo) {
                 document.body.style.backgroundImage = `url('${storage.imgFundo}')`;
                 document.body.style.backgroundPosition = storage.bgPosition;
@@ -320,7 +336,7 @@
             document.getElementById('progressBar').style.width = perc + "%";
             document.getElementById('percentText').innerText = perc + "%";
             
-            // Gerencia o indicador/badge de status ativo (Persistente)
+            // Badge Persistente
             const badge = document.getElementById('badgeDados');
             if (storage.configAtual) {
                 badge.innerHTML = `⚙️ Saída Configurada: <b>${storage.configAtual.missao}</b> | Data: <b>${storage.configAtual.data.split('-').reverse().join('/')}</b>`;
@@ -404,7 +420,7 @@
             const novoRegistro = {
                 missao: storage.configAtual.missao,
                 resultado: "ERRO",
-                motivo: motivo.toUpperCase(),
+                motivo: motifo.toUpperCase(),
                 tempo: "N/A",
                 data: storage.configAtual.data
             };
@@ -420,12 +436,9 @@
             setTimeout(() => document.body.style.animation = "", 200);
         }
 
-        // Funções de Customização Avançada (Admin)
+        // Fontes e Layout
         function changeFontProp(prop, value) {
-            if(value) {
-                storage[prop] = value;
-                atualizar();
-            }
+            if(value) { storage[prop] = value; atualizar(); }
         }
 
         function changeBgLayoutProp(prop, value) {
@@ -433,9 +446,16 @@
             atualizar();
         }
 
-        function changeBgImage(url) {
-            storage.imgFundo = url;
-            atualizar();
+        // Gerenciamento de Galeria Multirresolução / Múltiplas Imagens
+        function adicionarBgUrl() {
+            const url = document.getElementById('bgUrlInput').value.trim();
+            if(url) {
+                storage.imagensFundo.push(url);
+                storage.imgFundo = url; // Ativa automaticamente a nova imagem adicionada
+                document.getElementById('bgUrlInput').value = "";
+                atualizar();
+                renderGaleria();
+            }
         }
 
         function uploadBgImage(input) {
@@ -443,19 +463,79 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    storage.imgFundo = e.target.result; 
-                    document.getElementById('bgUrlInput').value = ""; 
+                    const base64 = e.target.result;
+                    storage.imagensFundo.push(base64);
+                    storage.imgFundo = base64; // Ativa automaticamente
+                    input.value = "";
                     atualizar();
+                    renderGaleria();
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function removerBgImage() {
+        function renderGaleria() {
+            const container = document.getElementById('galeriaImagens');
+            container.innerHTML = "";
+            
+            if(storage.imagensFundo.length === 0) {
+                container.innerHTML = `<span style="grid-column: span 4; font-size:0.7rem; color:gray; text-align:center; padding:10px;">Galeria Vazia</span>`;
+                return;
+            }
+
+            storage.imagensFundo.forEach((img, index) => {
+                const isActive = storage.imgFundo === img;
+                
+                const box = document.createElement('div');
+                box.style.position = 'relative';
+                box.style.width = '100%';
+                box.style.paddingTop = '100%'; // Formato Quadrado perfeito
+                box.style.border = isActive ? '2px solid var(--hacker-green)' : '1px solid #444';
+                box.style.borderRadius = '4px';
+                box.style.cursor = 'pointer';
+                box.style.background = `url('${img}') center center / cover no-repeat`;
+                box.title = isActive ? "Plano de fundo ativo" : "Clique para usar esta imagem";
+                
+                // Clique ativa a imagem
+                box.onclick = function(e) {
+                    if(e.target.tagName !== 'BUTTON') {
+                        storage.imgFundo = img;
+                        atualizar();
+                        renderGaleria();
+                    }
+                };
+
+                // Botão Deletar individual
+                const btnDel = document.createElement('button');
+                btnDel.innerText = "×";
+                btnDel.style.position = 'absolute';
+                btnDel.style.top = '0'; btnDel.style.right = '0';
+                btnDel.style.background = 'red'; btnDel.style.color = 'white';
+                btnDel.style.border = 'none'; btnDel.style.fontSize = '12px';
+                btnDel.style.fontWeight = 'bold'; btnDel.style.cursor = 'pointer';
+                btnDel.style.width = '16px'; btnDel.style.height = '16px';
+                btnDel.style.lineHeight = '14px'; btnDel.style.textAlign = 'center';
+                btnDel.style.padding = '0'; btnDel.style.borderRadius = '0 3px 0 3px';
+                
+                btnDel.onclick = function(e) {
+                    e.stopPropagation(); // Impede de ativar ao tentar deletar
+                    storage.imagensFundo.splice(index, 1);
+                    if(storage.imgFundo === img) {
+                        storage.imgFundo = storage.imagensFundo[0] || ""; // Seleciona outra imagem ou limpa se estiver vazio
+                    }
+                    atualizar();
+                    renderGaleria();
+                };
+
+                box.appendChild(btnDel);
+                container.appendChild(box);
+            });
+        }
+
+        function desativarBgImage() {
             storage.imgFundo = "";
-            document.getElementById('bgUrlInput').value = "";
-            document.getElementById('bgFileInput').value = "";
             atualizar();
+            renderGaleria();
         }
 
         function abrirDownload() { document.getElementById('modalDownload').style.display = 'block'; }
@@ -500,7 +580,6 @@
             document.getElementById('adminPanel').style.display = 'block'; 
             document.getElementById('newTitleInput').value = storage.titulo;
             
-            // Sincroniza inputs com os valores salvos no Storage
             document.getElementById('fontTitulo').value = storage.tituloFontFamily;
             document.getElementById('sizeTitulo').value = parseInt(storage.tituloFontSize) || 32;
             document.getElementById('fontGeral').value = storage.geralFontFamily;
@@ -508,9 +587,7 @@
             document.getElementById('bgPositionInput').value = storage.bgPosition;
             document.getElementById('bgSizeInput').value = storage.bgSize;
 
-            if(storage.imgFundo && !storage.imgFundo.startsWith("data:")) {
-                document.getElementById('bgUrlInput').value = storage.imgFundo;
-            }
+            renderGaleria();
         }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
         function changeTitle(v) { storage.titulo = v || "MESA - CONTROLE DE MISSÕES"; atualizar(); }
