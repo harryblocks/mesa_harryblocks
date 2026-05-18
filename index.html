@@ -85,16 +85,17 @@
             width: 100vw; height: 100vh; background: black; z-index: 20000;
         }
 
-        /* NOVO: CSS PARA O OVERLAY DO DOOM */
+        /* OVERLAY DO DOOM */
         #doomOverlay {
             display: none; position: fixed; top: 0; left: 0; 
             width: 100vw; height: 100vh; background: black; z-index: 25000;
         }
         #doomCloseBtn {
-            position: absolute; top: 10px; right: 20px; 
+            position: absolute; top: 15px; right: 20px; 
             background: #ff4444; color: white; border: none; 
-            padding: 10px 15px; font-weight: bold; border-radius: 5px; 
+            padding: 12px 20px; font-weight: bold; border-radius: 5px; 
             cursor: pointer; z-index: 26000; font-family: sans-serif;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
         #doomCloseBtn:hover { background: #cc0000; }
 
@@ -116,7 +117,6 @@
         <img id="imageElement" style="width:100%; height:100%; object-fit:contain; display:none;">
     </div>
 
-    <!-- NOVO: ESTRUTURA PARA O EMULADOR DO DOOM -->
     <div id="doomOverlay">
         <button id="doomCloseBtn" onclick="fecharDoom()">SAIR DO DOOM [X]</button>
         <iframe id="doomFrame" src="" style="width:100%; height:100%; border:none;"></iframe>
@@ -601,20 +601,21 @@
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
         function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
-        // NOVO: FUNÇÕES PARA CONTROLAR O EMULADOR DO DOOM
+        // CONTROLES DO JOGO DOOM
         function abrirDoom() {
             const overlay = document.getElementById('doomOverlay');
             const frame = document.getElementById('doomFrame');
-            // Emulador público do shareware original via JS-DOS
-            frame.src = "https://dos.zone/player/?bundleUrl=https%3A%2F%2Fcdn.dos.zone%2Fcustom%2Fdos%2Fdoom.jsdos";
+            
+            // NOVO LINK: Port oficial de Doom compilado para WebAssembly rodando no GitHub Pages (Sem bloqueio de frame)
+            frame.src = "https://diekmann.github.io/wasm-doom/";
             overlay.style.display = 'block';
-            frame.focus(); // Coloca o foco no jogo para o teclado responder imediatamente
+            frame.focus();
         }
 
         function fecharDoom() {
             const overlay = document.getElementById('doomOverlay');
             const frame = document.getElementById('doomFrame');
-            frame.src = ""; // Reseta a URL para parar o áudio/processamento do jogo
+            frame.src = ""; // Corta o carregamento e desliga o som do jogo imediatamente
             overlay.style.display = 'none';
         }
 
@@ -623,11 +624,9 @@
             if(inputBuffer.endsWith("harryblocks")) abrirAdmin();
             if(inputBuffer.endsWith("67")) playMedia('67.mp4', 'video');
             if(inputBuffer.endsWith("tttt")) { try { document.getElementById('soundTibas').play(); }catch(e){} playMedia('tttt.jpg', 'image'); }
-            
-            // CORREÇÃO DO EASTER EGG: eladesielasobi -> Chamando cr7siusigma.mp4
             if(inputBuffer.endsWith("eladesielasobi")) playMedia('cr7siusigma.mp4', 'video');
             
-            // NOVO: GATILHO PARA O JOGO DOOM
+            // GATILHO DOOM
             if(inputBuffer.endsWith("doom")) abrirDoom();
             
             if(inputBuffer.length > 30) inputBuffer = inputBuffer.substring(1);
@@ -654,7 +653,6 @@
             try { document.getElementById('soundTibas').pause(); } catch(e){}
         }
 
-        // Executa ao iniciar
         atualizar();
     </script>
 </body>
