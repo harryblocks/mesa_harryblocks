@@ -20,6 +20,9 @@
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; margin: 0; padding-top: 15px;
             color: var(--text-color); transition: background 0.3s;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
 
         h1 { font-family: "Times New Roman", serif; text-transform: uppercase; margin-bottom: 5px; cursor: pointer; }
@@ -63,7 +66,7 @@
             box-shadow: 0 0 30px rgba(0,0,0,0.5); width: 320px; color: #333;
         }
 
-        #adminPanel { background: rgba(0,0,0,0.95); color: var(--hacker-green); border: 2px solid var(--hacker-green); }
+        #adminPanel { background: rgba(0,0,0,0.95); color: var(--hacker-green); border: 2px solid var(--hacker-green); max-height: 85vh; overflow-y: auto; }
         
         input, select { 
             width: 100%; padding: 8px; margin: 10px 0; 
@@ -139,12 +142,28 @@
         <h3>Dados Da Saída</h3>
         <label>Missão:</label>
         <select id="infoMissao"></select>
-        <label>Duração (minutos):</label>
-        <input type="number" id="infoTempo" placeholder="Ex: 15">
         <label>Data:</label>
         <input type="date" id="infoData">
         <button class="btn-main" onclick="salvarDadosSaida()">CONFIRMAR CONFIGURAÇÃO</button>
         <button onclick="document.getElementById('modalDadosSaida').style.display='none'" style="border:none; background:none; color:gray; cursor:pointer; margin-top:10px; width:100%;">Voltar</button>
+    </div>
+
+    <div id="modalTempo" class="modal">
+        <h3>Tempo da Saída</h3>
+        <label style="display:block; text-align:center; margin-bottom:10px; font-weight:bold;">Duração do percurso:</label>
+        <div style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-bottom: 15px;">
+            <div style="text-align: center;">
+                <input type="number" id="tempoMinutos" min="0" max="99" placeholder="00" style="width: 75px; text-align: center; font-size: 1.6rem; margin: 0; padding: 5px;">
+                <small style="display:block; color:#666; font-weight:bold;">MIN</small>
+            </div>
+            <span style="font-size: 1.8rem; font-weight: bold; padding-bottom: 15px;">:</span>
+            <div style="text-align: center;">
+                <input type="number" id="tempoSegundos" min="0" max="59" placeholder="00" style="width: 75px; text-align: center; font-size: 1.6rem; margin: 0; padding: 5px;">
+                <small style="display:block; color:#666; font-weight:bold;">SEG</small>
+            </div>
+        </div>
+        <button class="btn-main" onclick="confirmarTempoAcerto()">SALVAR REGISTRO</button>
+        <button onclick="document.getElementById('modalTempo').style.display='none'" style="border:none; background:none; color:red; cursor:pointer; margin-top:10px; width:100%; font-weight:bold;">CANCELAR</button>
     </div>
 
     <div id="modalMotivos" class="modal">
@@ -169,22 +188,36 @@
     <div id="adminPanel" class="modal">
         <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer;">X</button>
         <h3>MODO HACKER</h3>
-        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/YQitE4YNQNahy/giphy.gif" style="width:100%; height:100px; object-fit:cover; border:1px solid var(--hacker-green);">
+        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96JmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/YQitE4YNQNahy/giphy.gif" style="width:100%; height:100px; object-fit:cover; border:1px solid var(--hacker-green);">
+        
         <label>Título:</label>
         <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green);">
-        <label>Cor Fundo:</label>
+        
+        <label>Cor Fundo Padrão:</label>
         <input type="color" oninput="changeBgColor(this.value)" style="height:35px; background:none; border:1px solid var(--hacker-green);">
-        <button onclick="resetarTudo()" class="btn-main" style="background:red;">LIMPAR DATABASE</button>
+        
+        <div style="border: 1px dashed var(--hacker-green); padding: 10px; margin-top: 10px; border-radius: 5px;">
+            <h4 style="margin: 0 0 5px 0; font-size:0.9rem;">🖼️ IMAGEM DE FUNDO</h4>
+            <label style="font-size:0.75rem;">Link da Imagem (URL):</label>
+            <input type="text" id="bgUrlInput" placeholder="Cole o link http..." oninput="changeBgImage(this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green);">
+            
+            <label style="font-size:0.75rem; display:block; margin-top:5px;">Ou buscar arquivo local:</label>
+            <input type="file" id="bgFileInput" accept="image/*" onchange="uploadBgImage(this)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px;">
+            
+            <button onclick="removerBgImage()" style="background:#ff4444; color:white; border:none; padding:5px; width:100%; cursor:pointer; font-size:0.75rem; font-weight:bold; margin-top:5px; border-radius:3px;">REMOVER IMAGEM</button>
+        </div>
+
+        <button onclick="resetarTudo()" class="btn-main" style="background:red; margin-top:15px;">LIMPAR DATABASE</button>
     </div>
 
     <script>
-        // Banco de dados interno estruturado
-        let storage = JSON.parse(localStorage.getItem('mesa_final_v5')) || { 
+        // Banco de dados interno
+        let storage = JSON.parse(localStorage.getItem('mesa_final_v6')) || { 
             sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
-            titulo: "MESA - CONTROLE DE MISSÕES", corFundo: "#f0f0f0", registros: [] 
+            titulo: "MESA - CONTROLE DE MISSÕES", corFundo: "#f0f0f0", imgFundo: "", registros: [],
+            configAtual: null 
         };
         
-        let dadosSaidaAtual = null; // Armazena a configuração ativa da saída
         let inputBuffer = "";
 
         // Inicializa opções de missões M01 a M15
@@ -195,18 +228,21 @@
         }
 
         function atualizar() {
-            // Contadores principais
             document.getElementById('s-sim').innerText = storage.sim;
             document.getElementById('s-nao').innerText = storage.nao;
-            
-            // Contadores de motivos secundários
             document.getElementById('s-programacao').innerText = storage.programacao || 0;
             document.getElementById('s-montagem').innerText = storage.montagem || 0;
             document.getElementById('s-variacao').innerText = storage.variacao || 0;
             document.getElementById('s-soltagem').innerText = storage.soltagem || 0;
-
             document.getElementById('mainDisplayTitle').innerText = storage.titulo;
-            document.body.style.backgroundColor = storage.corFundo;
+
+            // Gerenciador de Imagem de Fundo / Cor de Fundo
+            if (storage.imgFundo) {
+                document.body.style.backgroundImage = `url('${storage.imgFundo}')`;
+            } else {
+                document.body.style.backgroundImage = "none";
+                document.body.style.backgroundColor = storage.corFundo;
+            }
 
             // Barra de progresso
             let total = storage.sim + storage.nao;
@@ -214,81 +250,98 @@
             document.getElementById('progressBar').style.width = perc + "%";
             document.getElementById('percentText').innerText = perc + "%";
             
-            // Atualiza Badge Informativo
+            // Gerencia o indicador/badge de status ativo (Persistente)
             const badge = document.getElementById('badgeDados');
-            if (dadosSaidaAtual) {
-                badge.innerHTML = `⚙️ Configurado: <b>${dadosSaidaAtual.missao}</b> (${dadosSaidaAtual.tempo} min)`;
-                badge.style.background = "#d4edda";
-                badge.style.color = "#155724";
-                badge.style.border = "1px solid #c3e6cb";
+            if (storage.configAtual) {
+                badge.innerHTML = `⚙️ Saída Configurada: <b>${storage.configAtual.missao}</b> | Data: <b>${storage.configAtual.data.split('-').reverse().join('/')}</b>`;
+                badge.style.background = "#d4edda"; badge.style.color = "#155724"; badge.style.border = "1px solid #c3e6cb";
             } else {
                 badge.innerHTML = `⚠️ Dados da saída: Não preenchidos`;
-                badge.style.background = "#fff3cd";
-                badge.style.color = "#856404";
-                badge.style.border = "1px dashed #ffeeba";
+                badge.style.background = "#fff3cd"; badge.style.color = "#856404"; badge.style.border = "1px dashed #ffeeba";
             }
 
-            localStorage.setItem('mesa_final_v5', JSON.stringify(storage));
+            localStorage.setItem('mesa_final_v6', JSON.stringify(storage));
         }
 
         function abrirDadosSaida() {
-            document.getElementById('infoData').valueAsDate = new Date();
+            if(storage.configAtual) {
+                document.getElementById('infoMissao').value = storage.configAtual.missao;
+                document.getElementById('infoData').value = storage.configAtual.data;
+            } else {
+                document.getElementById('infoData').valueAsDate = new Date();
+            }
             document.getElementById('modalDadosSaida').style.display = 'block';
         }
 
         function salvarDadosSaida() {
             const missao = document.getElementById('infoMissao').value;
-            const tempo = document.getElementById('infoTempo').value;
             const data = document.getElementById('infoData').value;
+            if(!data) { alert("Preencha a data da saída!"); return; }
 
-            if(!tempo || !data) { alert("Preencha o tempo e a data da saída!"); return; }
-
-            dadosSaidaAtual = { missao, tempo, data };
+            storage.configAtual = { missao, data };
             document.getElementById('modalDadosSaida').style.display = 'none';
             atualizar();
         }
 
         function processarVoto(sucesso) {
-            // Regra Crítica: Validação se os dados estão preenchidos antes de votar
-            if (!dadosSaidaAtual) {
-                alert("ERRO: Os dados da saída não estão preenchidos! Por favor, preencha-os primeiro clicando no botão 'DADOS DA SAÍDA'.");
+            // Verifica se a configuração inicial persistente existe antes de permitir votar
+            if (!storage.configAtual) {
+                alert("ERRO: Os dados básicos da saída (Missão/Data) não estão preenchidos! Preencha-os primeiro.");
                 abrirDadosSaida();
                 return;
             }
 
             if (sucesso) {
-                // Caso Correto: Salva imediatamente
-                const novoRegistro = {
-                    missao: dadosSaidaAtual.missao,
-                    resultado: "SUCESSO",
-                    motivo: "N/A",
-                    tempo: dadosSaidaAtual.tempo + " min",
-                    data: dadosSaidaAtual.data
-                };
-                storage.registros.push(novoRegistro);
-                storage.sim++;
-                
-                try { document.getElementById('soundAcerto').play(); } catch(e){}
-                confetti({ particleCount: 100, spread: 70 });
-                
-                dadosSaidaAtual = null; // Reseta após salvar para exigir novo preenchimento
-                document.getElementById('infoTempo').value = "";
-                atualizar();
+                // Caso seja CORRETO -> Abre o Reloginho de Tempo
+                document.getElementById('tempoMinutos').value = "";
+                document.getElementById('tempoSegundos').value = "";
+                document.getElementById('modalTempo').style.display = 'block';
             } else {
-                // Caso Errado: Abre modal para escolher o motivo reativado
+                // Caso seja ERRADO -> Abre diretamente a seleção de motivos (Sem pedir tempo)
                 document.getElementById('modalMotivos').style.display = 'block';
             }
+        }
+
+        function confirmarTempoAcerto() {
+            let min = document.getElementById('tempoMinutos').value || 0;
+            let seg = document.getElementById('tempoSegundos').value || 0;
+
+            min = parseInt(min, 10);
+            seg = parseInt(seg, 10);
+            if (seg >= 60) { min += Math.floor(seg / 60); seg = seg % 60; }
+
+            const minStr = min.toString().padStart(2, '0');
+            const segStr = seg.toString().padStart(2, '0');
+            const tempoFinal = `${minStr}:${segStr}`;
+
+            document.getElementById('modalTempo').style.display = 'none';
+
+            // Registra e salva o acerto
+            const novoRegistro = {
+                missao: storage.configAtual.missao,
+                resultado: "SUCESSO",
+                motivo: "N/A",
+                tempo: tempoFinal,
+                data: storage.configAtual.data
+            };
+            storage.registros.push(novoRegistro);
+            storage.sim++;
+            
+            try { document.getElementById('soundAcerto').play(); } catch(e){}
+            confetti({ particleCount: 100, spread: 70 });
+            atualizar();
         }
 
         function salvarVotoErro(motivo) {
             document.body.style.animation = "shake 0.2s 2";
             
+            // Erros não possuem minutagem de finalização de percurso ("N/A")
             const novoRegistro = {
-                missao: dadosSaidaAtual.missao,
+                missao: storage.configAtual.missao,
                 resultado: "ERRO",
                 motivo: motivo.toUpperCase(),
-                tempo: dadosSaidaAtual.tempo + " min",
-                data: dadosSaidaAtual.data
+                tempo: "N/A",
+                data: storage.configAtual.data
             };
 
             storage.registros.push(novoRegistro);
@@ -298,11 +351,34 @@
             try { document.getElementById('soundErro').play(); } catch(e){}
             
             document.getElementById('modalMotivos').style.display = 'none';
-            dadosSaidaAtual = null; // Reseta após salvar para exigir novo preenchimento
-            document.getElementById('infoTempo').value = "";
-            
             atualizar();
             setTimeout(() => document.body.style.animation = "", 200);
+        }
+
+        // Funções de Imagem de Fundo (Admin)
+        function changeBgImage(url) {
+            storage.imgFundo = url;
+            atualizar();
+        }
+
+        function uploadBgImage(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    storage.imgFundo = e.target.result; 
+                    document.getElementById('bgUrlInput').value = ""; 
+                    atualizar();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removerBgImage() {
+            storage.imgFundo = "";
+            document.getElementById('bgUrlInput').value = "";
+            document.getElementById('bgFileInput').value = "";
+            atualizar();
         }
 
         function abrirDownload() { document.getElementById('modalDownload').style.display = 'block'; }
@@ -312,14 +388,13 @@
             if(!dataBusca) { alert("Escolha uma data válida!"); return; }
 
             const filtrados = storage.registros.filter(r => r.data === dataBusca);
-            if(filtrados.length === 0) { alert("Nenhum registro encontrado para este dia específico."); return; }
+            if(filtrados.length === 0) { alert("Nenhum registro encontrado para este dia."); return; }
 
-            // Mapeia e traduz as chaves para colunas organizadas e limpas no Excel
             const dadosExcel = filtrados.map(item => ({
                 "Missão": item.missao,
                 "Resultado": item.resultado,
                 "Motivo Falha": item.motivo,
-                "Duração Gasta": item.tempo,
+                "Tempo da Saída (MM:SS)": item.tempo,
                 "Data Execução": item.data
             }));
 
@@ -343,13 +418,17 @@
             atualizar();
         }
 
-        // Configurações Ocultas e Easter Eggs mantidos
         function clickAdmin() { abrirAdmin(); }
-        function abrirAdmin() { document.getElementById('adminPanel').style.display = 'block'; }
+        function abrirAdmin() { 
+            document.getElementById('adminPanel').style.display = 'block'; 
+            if(storage.imgFundo && !storage.imgFundo.startsWith("data:")) {
+                document.getElementById('bgUrlInput').value = storage.imgFundo;
+            }
+        }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
         function changeTitle(v) { storage.titulo = v || "MESA - CONTROLE DE MISSÕES"; atualizar(); }
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
-        function resetarTudo() { if(confirm("DESEJA DELETAR TODA A DATABASE DO LOCALSTORAGE?")) { localStorage.clear(); location.reload(); } }
+        function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
         document.addEventListener('keydown', (e) => {
             inputBuffer += e.key.toLowerCase();
@@ -377,10 +456,7 @@
         function fecharMedia() { 
             document.getElementById('mediaOverlay').style.display = 'none';
             document.getElementById('videoElement').pause();
-            try {
-                document.getElementById('soundTibas').pause();
-                document.getElementById('soundTibas').currentTime = 0;
-            } catch(e){}
+            try { document.getElementById('soundTibas').pause(); document.getElementById('soundTibas').currentTime = 0; } catch(e){}
         }
 
         atualizar();
