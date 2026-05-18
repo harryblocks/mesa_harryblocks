@@ -19,13 +19,14 @@
             font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; margin: 0; padding-top: 15px;
-            color: var(--text-color); transition: background 0.3s;
+            color: var(--text-color); transition: background 0.3s, font-size 0.2s, font-family 0.2s;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            background-repeat: no-repeat;
         }
 
-        h1 { font-family: "Times New Roman", serif; text-transform: uppercase; margin-bottom: 5px; cursor: pointer; }
+        h1 { font-family: "Times New Roman", serif; text-transform: uppercase; margin-bottom: 5px; cursor: pointer; transition: font-size 0.2s, font-family 0.2s; text-align: center;}
 
         .progress-container {
             width: 85%; max-width: 450px; background: var(--soft-red);
@@ -167,6 +168,7 @@
     </div>
 
     <div id="modalMotivos" class="modal">
+        <img src="2e82eda13b1ad2f508a6651858124034.png" alt="Erro" style="width: 100%; max-height: 140px; object-fit: contain; margin-bottom: 10px; display: block;">
         <h3>QUAL O MOTIVO DO ERRO?</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
             <button class="btn-main" style="background:#6c757d; margin:0;" onclick="salvarVotoErro('variacao')">Variação</button>
@@ -193,8 +195,38 @@
         <label>Título:</label>
         <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green);">
         
-        <label>Cor Fundo Padrão:</label>
-        <input type="color" oninput="changeBgColor(this.value)" style="height:35px; background:none; border:1px solid var(--hacker-green);">
+        <div style="border: 1px dashed var(--hacker-green); padding: 10px; margin-top: 10px; border-radius: 5px;">
+            <h4 style="margin: 0 0 5px 0; font-size:0.9rem;">📐 TAMANHO E FONTES</h4>
+            
+            <label style="font-size:0.75rem; color:#fff; display:block; margin-top:5px;">Fonte do Título:</label>
+            <select id="fontTitulo" onchange="changeFontProp('tituloFontFamily', this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Courier New', monospace">Courier New</option>
+                <option value="Impact, sans-serif">Impact</option>
+                <option value="Georgia, serif">Georgia</option>
+            </select>
+            <label style="font-size:0.75rem; color:#fff;">Tamanho do Título (px):</label>
+            <input type="number" id="sizeTitulo" oninput="changeFontProp('tituloFontSize', this.value + 'px')" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
+
+            <hr style="border-color:var(--hacker-green); opacity:0.3; margin:10px 0;">
+
+            <label style="font-size:0.75rem; color:#fff; display:block;">Fonte Geral (Outros textos):</label>
+            <select id="fontGeral" onchange="changeFontProp('geralFontFamily', this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
+                <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Courier New', monospace">Courier New</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="system-ui, sans-serif">Padrão Sistema</option>
+            </select>
+            <label style="font-size:0.75rem; color:#fff;">Tamanho Geral (px):</label>
+            <input type="number" id="sizeGeral" oninput="changeFontProp('geralFontSize', this.value + 'px')" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
+        </div>
+
+        <label style="margin-top:10px; display:block;">Cor Fundo Padrão (Sem imagem):</label>
+        <input type="color" oninput="changeBgColor(this.value)" style="height:35px; background:none; border:1px solid var(--hacker-green); padding: 0;">
         
         <div style="border: 1px dashed var(--hacker-green); padding: 10px; margin-top: 10px; border-radius: 5px;">
             <h4 style="margin: 0 0 5px 0; font-size:0.9rem;">🖼️ IMAGEM DE FUNDO</h4>
@@ -204,20 +236,48 @@
             <label style="font-size:0.75rem; display:block; margin-top:5px;">Ou buscar arquivo local:</label>
             <input type="file" id="bgFileInput" accept="image/*" onchange="uploadBgImage(this)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px;">
             
-            <button onclick="removerBgImage()" style="background:#ff4444; color:white; border:none; padding:5px; width:100%; cursor:pointer; font-size:0.75rem; font-weight:bold; margin-top:5px; border-radius:3px;">REMOVER IMAGEM</button>
+            <label style="font-size:0.75rem; display:block; margin-top:8px; color:#fff;">Onde a imagem fica (Posição):</label>
+            <select id="bgPositionInput" onchange="changeBgLayoutProp('bgPosition', this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
+                <option value="center">Centro</option>
+                <option value="top">Topo</option>
+                <option value="bottom">Baixo</option>
+                <option value="left">Esquerda</option>
+                <option value="right">Direita</option>
+            </select>
+
+            <label style="font-size:0.75rem; display:block; margin-top:5px; color:#fff;">Tamanho da Imagem:</label>
+            <select id="bgSizeInput" onchange="changeBgLayoutProp('bgSize', this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
+                <option value="cover">Preencher Tela Inteira (Cover)</option>
+                <option value="contain">Ajustar Sem Cortar (Contain)</option>
+                <option value="100% 100%">Esticar Total (100% 100%)</option>
+                <option value="auto">Tamanho Automático (Original)</option>
+            </select>
+
+            <button onclick="removerBgImage()" style="background:#ff4444; color:white; border:none; padding:5px; width:100%; cursor:pointer; font-size:0.75rem; font-weight:bold; margin-top:8px; border-radius:3px;">REMOVER IMAGEM</button>
         </div>
 
         <button onclick="resetarTudo()" class="btn-main" style="background:red; margin-top:15px;">LIMPAR DATABASE</button>
     </div>
 
     <script>
-        // Banco de dados interno
+        // Banco de dados interno com suporte a fontes e propriedades de background
         let storage = JSON.parse(localStorage.getItem('mesa_final_v6')) || { 
             sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
             titulo: "MESA - CONTROLE DE MISSÕES", corFundo: "#f0f0f0", imgFundo: "", registros: [],
-            configAtual: null 
+            configAtual: null,
+            tituloFontFamily: "'Times New Roman', serif", tituloFontSize: "32px",
+            geralFontFamily: "'Segoe UI', sans-serif", geralFontSize: "16px",
+            bgPosition: "center", bgSize: "cover"
         };
         
+        // Garante compatibilidade caso carregue dados antigos do LocalStorage
+        if(!storage.tituloFontFamily) storage.tituloFontFamily = "'Times New Roman', serif";
+        if(!storage.tituloFontSize) storage.tituloFontSize = "32px";
+        if(!storage.geralFontFamily) storage.geralFontFamily = "'Segoe UI', sans-serif";
+        if(!storage.geralFontSize) storage.geralFontSize = "16px";
+        if(!storage.bgPosition) storage.bgPosition = "center";
+        if(!storage.bgSize) storage.bgSize = "cover";
+
         let inputBuffer = "";
 
         // Inicializa opções de missões M01 a M15
@@ -234,11 +294,21 @@
             document.getElementById('s-montagem').innerText = storage.montagem || 0;
             document.getElementById('s-variacao').innerText = storage.variacao || 0;
             document.getElementById('s-soltagem').innerText = storage.soltagem || 0;
-            document.getElementById('mainDisplayTitle').innerText = storage.titulo;
+            
+            // Renderização das fontes dinâmicas
+            const titleEl = document.getElementById('mainDisplayTitle');
+            titleEl.innerText = storage.titulo;
+            titleEl.style.fontFamily = storage.tituloFontFamily;
+            titleEl.style.fontSize = storage.tituloFontSize;
 
-            // Gerenciador de Imagem de Fundo / Cor de Fundo
+            document.body.style.fontFamily = storage.geralFontFamily;
+            document.body.style.fontSize = storage.geralFontSize;
+
+            // Gerenciador Avançado de Imagem de Fundo / Cor de Fundo
             if (storage.imgFundo) {
                 document.body.style.backgroundImage = `url('${storage.imgFundo}')`;
+                document.body.style.backgroundPosition = storage.bgPosition;
+                document.body.style.backgroundSize = storage.bgSize;
             } else {
                 document.body.style.backgroundImage = "none";
                 document.body.style.backgroundColor = storage.corFundo;
@@ -284,7 +354,6 @@
         }
 
         function processarVoto(sucesso) {
-            // Verifica se a configuração inicial persistente existe antes de permitir votar
             if (!storage.configAtual) {
                 alert("ERRO: Os dados básicos da saída (Missão/Data) não estão preenchidos! Preencha-os primeiro.");
                 abrirDadosSaida();
@@ -292,12 +361,10 @@
             }
 
             if (sucesso) {
-                // Caso seja CORRETO -> Abre o Reloginho de Tempo
                 document.getElementById('tempoMinutos').value = "";
                 document.getElementById('tempoSegundos').value = "";
                 document.getElementById('modalTempo').style.display = 'block';
             } else {
-                // Caso seja ERRADO -> Abre diretamente a seleção de motivos (Sem pedir tempo)
                 document.getElementById('modalMotivos').style.display = 'block';
             }
         }
@@ -316,7 +383,6 @@
 
             document.getElementById('modalTempo').style.display = 'none';
 
-            // Registra e salva o acerto
             const novoRegistro = {
                 missao: storage.configAtual.missao,
                 resultado: "SUCESSO",
@@ -335,7 +401,6 @@
         function salvarVotoErro(motivo) {
             document.body.style.animation = "shake 0.2s 2";
             
-            // Erros não possuem minutagem de finalização de percurso ("N/A")
             const novoRegistro = {
                 missao: storage.configAtual.missao,
                 resultado: "ERRO",
@@ -355,7 +420,19 @@
             setTimeout(() => document.body.style.animation = "", 200);
         }
 
-        // Funções de Imagem de Fundo (Admin)
+        // Funções de Customização Avançada (Admin)
+        function changeFontProp(prop, value) {
+            if(value) {
+                storage[prop] = value;
+                atualizar();
+            }
+        }
+
+        function changeBgLayoutProp(prop, value) {
+            storage[prop] = value;
+            atualizar();
+        }
+
         function changeBgImage(url) {
             storage.imgFundo = url;
             atualizar();
@@ -421,6 +498,16 @@
         function clickAdmin() { abrirAdmin(); }
         function abrirAdmin() { 
             document.getElementById('adminPanel').style.display = 'block'; 
+            document.getElementById('newTitleInput').value = storage.titulo;
+            
+            // Sincroniza inputs com os valores salvos no Storage
+            document.getElementById('fontTitulo').value = storage.tituloFontFamily;
+            document.getElementById('sizeTitulo').value = parseInt(storage.tituloFontSize) || 32;
+            document.getElementById('fontGeral').value = storage.geralFontFamily;
+            document.getElementById('sizeGeral').value = parseInt(storage.geralFontSize) || 16;
+            document.getElementById('bgPositionInput').value = storage.bgPosition;
+            document.getElementById('bgSizeInput').value = storage.bgSize;
+
             if(storage.imgFundo && !storage.imgFundo.startsWith("data:")) {
                 document.getElementById('bgUrlInput').value = storage.imgFundo;
             }
