@@ -330,7 +330,7 @@
         }
 
         let inputBuffer = "";
-        var dosboxInstance = null; // Guardará a instância ativa do emulador do script js-dos
+        var dosboxInstance = null; 
 
         const selectMissao = document.getElementById('infoMissao');
         for(let i=1; i<=15; i++) {
@@ -451,7 +451,7 @@
             const novoRegistro = {
                 missao: storage.configAtual.missao,
                 resultado: "ERRO",
-                motivo: motif.toUpperCase(),
+                motivo: motivo.toUpperCase(),
                 tempo: "N/A",
                 data: storage.configAtual.data
             };
@@ -621,16 +621,15 @@
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
         function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
-        // INTEGRACAO: EXECUTAR O SCRIPT ENVIADO COMO POP-UP INTERNO
+        // EXECUTAR O SCRIPT PUXANDO O ZIP DIRETO DA INTERNET (CDN)
         function abrirDoom() {
-            // 1. Torna a janela do pop-up visível na tela
             document.getElementById('doomOverlay').style.display = 'block';
 
-            // 2. Executa a lógica de carregamento do script js-dos clássico enviado por si
+            // Carrega o arquivo diretamente do servidor público oficial da biblioteca js-dos
             dosboxInstance = new Dosbox({
                 id: "dosbox",
                 onload: function (dosbox) {
-                    dosbox.run("upload/DOOM-@evilution.zip", "./doom");
+                    dosbox.run("https://js-dos.com/cdn/upload/DOOM-@evilution.zip", "./doom");
                 },
                 onrun: function (dosbox, app) {
                     console.log("App '" + app + "' is runned");
@@ -639,16 +638,12 @@
         }
 
         function fecharDoom() {
-            // 1. Oculta o Pop-up de navegação da interface
             document.getElementById('doomOverlay').style.display = 'none';
 
-            // 2. Destrói o processo interno limpando o HTML para parar o áudio e jogo
             const container = document.getElementById('dosbox');
             if (container) {
                 container.innerHTML = ''; 
             }
-            
-            // 3. Esvazia a instância ativa na memória
             dosboxInstance = null;
         }
 
@@ -670,7 +665,6 @@
             }
         });
 
-        // Inicializa a página carregando o banco local
         atualizar();
     </script>
 </body>
