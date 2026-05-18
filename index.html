@@ -31,13 +31,17 @@
         
         #progressBar { height: 100%; width: 0%; background: var(--soft-green); transition: width 0.5s; }
 
+        .reasons-container {
+            font-size: 0.8rem; margin: 10px 0; text-align: center; font-weight: bold;
+        }
+
         .stats-box {
             background: white; border-radius: 12px; padding: 15px;
             width: 80%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: center; margin: 15px 0; color: #333;
+            text-align: center; margin: 10px 0; color: #333;
         }
 
-        .voting-area { display: flex; gap: 20px; }
+        .voting-area { display: flex; gap: 20px; margin-top: 10px; }
         .vote-card {
             background: white; padding: 15px; border-radius: 15px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;
@@ -45,6 +49,11 @@
         }
         .vote-card:hover { transform: scale(1.05); }
         .vote-card img { width: 80px; }
+
+        .status-badge {
+            background: #e0e0e0; padding: 6px 12px; border-radius: 20px;
+            font-size: 0.85rem; font-weight: bold; margin-top: 10px; border: 1px dashed #666;
+        }
 
         /* MODAIS */
         .modal { 
@@ -58,18 +67,24 @@
         
         input, select { 
             width: 100%; padding: 8px; margin: 10px 0; 
-            border-radius: 5px; border: 1px solid #ccc; 
+            border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box;
         }
 
         .btn-main {
             background: #007bff; color: white; border: none; 
             padding: 10px; border-radius: 5px; cursor: pointer; width: 100%;
-            font-weight: bold; margin-top: 10px;
+            font-weight: bold; margin-top: 10px; text-transform: uppercase;
         }
 
         #mediaOverlay {
             display: none; position: fixed; top: 0; left: 0; 
             width: 100vw; height: 100vh; background: black; z-index: 20000;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-3px, -2px); }
+            100% { transform: translate(0, 0); }
         }
     </style>
 </head>
@@ -86,70 +101,93 @@
 
     <h1 id="mainDisplayTitle" onclick="clickAdmin()">MESA - CONTROLE DE MISSÕES</h1>
     
-    <div style="display:flex; gap:10px;">
-        <button onclick="undo()" style="background:#ffc107; border:none; padding:8px; border-radius:5px; cursor:pointer;">↩️ DESFAZER</button>
-        <button onclick="abrirDownload()" style="background:#28a745; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 BAIXAR REGISTROS</button>
+    <div style="display:flex; gap:10px; flex-wrap: wrap; justify-content: center;">
+        <button onclick="undo()" style="background:#ffc107; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">↩️ DESFAZER</button>
+        <button onclick="abrirDadosSaida()" style="background:#007bff; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">📝 DADOS DA SAÍDA</button>
+        <button onclick="abrirDownload()" style="background:#28a745; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 BAIXAR REGISTROS</button>
     </div>
 
-    <div class="progress-container" style="margin-top:20px;">
+    <div id="badgeDados" class="status-badge">⚠️ Dados da saída: Não preenchidos</div>
+
+    <div class="progress-container" style="margin-top:15px;">
         <div id="progressBar"></div>
     </div>
     <div style="font-weight: bold; margin: 5px 0;">TAXA DE SUCESSO: <span id="percentText">0%</span></div>
+
+    <div class="reasons-container">
+        ⚠️ MOTIVOS DO "NÃO": 
+        PROG: <span id="s-programacao">0</span> | 
+        MONT: <span id="s-montagem">0</span> | 
+        VAR: <span id="s-variacao">0</span> | 
+        SOLT: <span id="s-soltagem">0</span>
+    </div>
 
     <div class="stats-box">
         <div style="font-size: 1.2rem; font-weight: bold;">✅ <span id="s-sim">0</span> | ❌ <span id="s-nao">0</span></div>
     </div>
 
     <div class="voting-area">
-        <div class="vote-card" onclick="prepararVoto(true)">
+        <div class="vote-card" onclick="processarVoto(true)">
             <img src="like.png"><p>CORRETO</p>
         </div>
-        <div class="vote-card" onclick="prepararVoto(false)">
+        <div class="vote-card" onclick="processarVoto(false)">
             <img src="6323-dislikebs.png"><p>ERRADO</p>
         </div>
     </div>
 
-    <div id="modalInfo" class="modal">
-        <h3>Informações da Saída</h3>
+    <div id="modalDadosSaida" class="modal">
+        <h3>Dados Da Saída</h3>
         <label>Missão:</label>
-        <select id="infoMissao">
-            </select>
+        <select id="infoMissao"></select>
         <label>Duração (minutos):</label>
         <input type="number" id="infoTempo" placeholder="Ex: 15">
         <label>Data:</label>
         <input type="date" id="infoData">
-        <button class="btn-main" onclick="confirmarVoto()">SALVAR REGISTRO</button>
+        <button class="btn-main" onclick="salvarDadosSaida()">CONFIRMAR CONFIGURAÇÃO</button>
+        <button onclick="document.getElementById('modalDadosSaida').style.display='none'" style="border:none; background:none; color:gray; cursor:pointer; margin-top:10px; width:100%;">Voltar</button>
+    </div>
+
+    <div id="modalMotivos" class="modal">
+        <h3>QUAL O MOTIVO DO ERRO?</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button class="btn-main" style="background:#6c757d; margin:0;" onclick="salvarVotoErro('variacao')">Variação</button>
+            <button class="btn-main" style="background:#6c757d; margin:0;" onclick="salvarVotoErro('soltagem')">Soltagem</button>
+            <button class="btn-main" style="background:#6c757d; margin:0;" onclick="salvarVotoErro('montagem')">Montagem</button>
+            <button class="btn-main" style="background:#6c757d; margin:0;" onclick="salvarVotoErro('programacao')">Programação</button>
+        </div>
+        <button onclick="document.getElementById('modalMotivos').style.display='none'" style="border:none; background:none; color:red; cursor:pointer; margin-top:15px; width:100%; font-weight:bold;">CANCELAR</button>
     </div>
 
     <div id="modalDownload" class="modal">
-        <h3>Baixar Registros</h3>
+        <h3>Baixar Registros Diários</h3>
         <label>Selecione o Dia:</label>
         <input type="date" id="downloadData">
-        <button class="btn-main" onclick="gerarExcel()">BAIXAR EXCEL (.XLSX)</button>
-        <button onclick="this.parentElement.style.display='none'" style="border:none; background:none; color:red; cursor:pointer; margin-top:10px;">Fechar</button>
+        <button class="btn-main" style="background:#28a745;" onclick="gerarExcel()">BAIXAR EXCEL (.XLSX)</button>
+        <button onclick="this.parentElement.style.display='none'" style="border:none; background:none; color:red; cursor:pointer; margin-top:10px; width:100%;">Fechar</button>
     </div>
 
     <div id="adminPanel" class="modal">
-        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none;">X</button>
+        <button onclick="fecharAdmin()" style="float:right; background:red; color:white; border:none; cursor:pointer;">X</button>
         <h3>MODO HACKER</h3>
-        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/YQitE4YNQNahy/giphy.gif" style="width:100%; height:100px; object-fit:cover;">
+        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96Y3B6eGZ4bm96JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/YQitE4YNQNahy/giphy.gif" style="width:100%; height:100px; object-fit:cover; border:1px solid var(--hacker-green);">
         <label>Título:</label>
-        <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="background:#111; color:var(--hacker-green);">
+        <input type="text" id="newTitleInput" oninput="changeTitle(this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green);">
         <label>Cor Fundo:</label>
-        <input type="color" oninput="changeBgColor(this.value)">
-        <button onclick="resetarTudo()" class="btn-main" style="background:red;">LIMPAR TUDO</button>
+        <input type="color" oninput="changeBgColor(this.value)" style="height:35px; background:none; border:1px solid var(--hacker-green);">
+        <button onclick="resetarTudo()" class="btn-main" style="background:red;">LIMPAR DATABASE</button>
     </div>
 
     <script>
-        // Banco de dados: 'registros' guarda cada saída individual
-        let storage = JSON.parse(localStorage.getItem('mesa_final_v4')) || { 
-            sim: 0, nao: 0, titulo: "MESA - CONTROLE DE MISSÕES", corFundo: "#f0f0f0", registros: [] 
+        // Banco de dados interno estruturado
+        let storage = JSON.parse(localStorage.getItem('mesa_final_v5')) || { 
+            sim: 0, nao: 0, programacao: 0, montagem: 0, variacao: 0, soltagem: 0,
+            titulo: "MESA - CONTROLE DE MISSÕES", corFundo: "#f0f0f0", registros: [] 
         };
         
-        let votoTemporario = null;
+        let dadosSaidaAtual = null; // Armazena a configuração ativa da saída
         let inputBuffer = "";
 
-        // Popular as missões M01 a M15
+        // Inicializa opções de missões M01 a M15
         const selectMissao = document.getElementById('infoMissao');
         for(let i=1; i<=15; i++) {
             let m = "M" + (i < 10 ? "0"+i : i);
@@ -157,91 +195,167 @@
         }
 
         function atualizar() {
+            // Contadores principais
             document.getElementById('s-sim').innerText = storage.sim;
             document.getElementById('s-nao').innerText = storage.nao;
+            
+            // Contadores de motivos secundários
+            document.getElementById('s-programacao').innerText = storage.programacao || 0;
+            document.getElementById('s-montagem').innerText = storage.montagem || 0;
+            document.getElementById('s-variacao').innerText = storage.variacao || 0;
+            document.getElementById('s-soltagem').innerText = storage.soltagem || 0;
+
             document.getElementById('mainDisplayTitle').innerText = storage.titulo;
             document.body.style.backgroundColor = storage.corFundo;
 
+            // Barra de progresso
             let total = storage.sim + storage.nao;
             let perc = total === 0 ? 0 : Math.round((storage.sim / total) * 100);
             document.getElementById('progressBar').style.width = perc + "%";
             document.getElementById('percentText').innerText = perc + "%";
-            localStorage.setItem('mesa_final_v4', JSON.stringify(storage));
+            
+            // Atualiza Badge Informativo
+            const badge = document.getElementById('badgeDados');
+            if (dadosSaidaAtual) {
+                badge.innerHTML = `⚙️ Configurado: <b>${dadosSaidaAtual.missao}</b> (${dadosSaidaAtual.tempo} min)`;
+                badge.style.background = "#d4edda";
+                badge.style.color = "#155724";
+                badge.style.border = "1px solid #c3e6cb";
+            } else {
+                badge.innerHTML = `⚠️ Dados da saída: Não preenchidos`;
+                badge.style.background = "#fff3cd";
+                badge.style.color = "#856404";
+                badge.style.border = "1px dashed #ffeeba";
+            }
+
+            localStorage.setItem('mesa_final_v5', JSON.stringify(storage));
         }
 
-        function prepararVoto(sucesso) {
-            votoTemporario = sucesso;
+        function abrirDadosSaida() {
             document.getElementById('infoData').valueAsDate = new Date();
-            document.getElementById('modalInfo').style.display = 'block';
+            document.getElementById('modalDadosSaida').style.display = 'block';
         }
 
-        function confirmarVoto() {
+        function salvarDadosSaida() {
             const missao = document.getElementById('infoMissao').value;
             const tempo = document.getElementById('infoTempo').value;
             const data = document.getElementById('infoData').value;
 
-            if(!tempo || !data) { alert("Preencha o tempo e a data!"); return; }
+            if(!tempo || !data) { alert("Preencha o tempo e a data da saída!"); return; }
 
+            dadosSaidaAtual = { missao, tempo, data };
+            document.getElementById('modalDadosSaida').style.display = 'none';
+            atualizar();
+        }
+
+        function processarVoto(sucesso) {
+            // Regra Crítica: Validação se os dados estão preenchidos antes de votar
+            if (!dadosSaidaAtual) {
+                alert("ERRO: Os dados da saída não estão preenchidos! Por favor, preencha-os primeiro clicando no botão 'DADOS DA SAÍDA'.");
+                abrirDadosSaida();
+                return;
+            }
+
+            if (sucesso) {
+                // Caso Correto: Salva imediatamente
+                const novoRegistro = {
+                    missao: dadosSaidaAtual.missao,
+                    resultado: "SUCESSO",
+                    motivo: "N/A",
+                    tempo: dadosSaidaAtual.tempo + " min",
+                    data: dadosSaidaAtual.data
+                };
+                storage.registros.push(novoRegistro);
+                storage.sim++;
+                
+                try { document.getElementById('soundAcerto').play(); } catch(e){}
+                confetti({ particleCount: 100, spread: 70 });
+                
+                dadosSaidaAtual = null; // Reseta após salvar para exigir novo preenchimento
+                document.getElementById('infoTempo').value = "";
+                atualizar();
+            } else {
+                // Caso Errado: Abre modal para escolher o motivo reativado
+                document.getElementById('modalMotivos').style.display = 'block';
+            }
+        }
+
+        function salvarVotoErro(motivo) {
+            document.body.style.animation = "shake 0.2s 2";
+            
             const novoRegistro = {
-                missao: missao,
-                resultado: votoTemporario ? "SUCESSO" : "ERRO",
-                tempo: tempo + " min",
-                data: data
+                missao: dadosSaidaAtual.missao,
+                resultado: "ERRO",
+                motivo: motivo.toUpperCase(),
+                tempo: dadosSaidaAtual.tempo + " min",
+                data: dadosSaidaAtual.data
             };
 
             storage.registros.push(novoRegistro);
-            if(votoTemporario) {
-                storage.sim++;
-                document.getElementById('soundAcerto').play();
-                confetti({ particleCount: 100, spread: 70 });
-            } else {
-                storage.nao++;
-                document.getElementById('soundErro').play();
-            }
+            storage.nao++;
+            storage[motivo] = (storage[motivo] || 0) + 1;
 
-            document.getElementById('modalInfo').style.display = 'none';
+            try { document.getElementById('soundErro').play(); } catch(e){}
+            
+            document.getElementById('modalMotivos').style.display = 'none';
+            dadosSaidaAtual = null; // Reseta após salvar para exigir novo preenchimento
             document.getElementById('infoTempo').value = "";
+            
             atualizar();
+            setTimeout(() => document.body.style.animation = "", 200);
         }
 
         function abrirDownload() { document.getElementById('modalDownload').style.display = 'block'; }
 
         function gerarExcel() {
             const dataBusca = document.getElementById('downloadData').value;
-            if(!dataBusca) { alert("Escolha uma data!"); return; }
+            if(!dataBusca) { alert("Escolha uma data válida!"); return; }
 
             const filtrados = storage.registros.filter(r => r.data === dataBusca);
-            if(filtrados.length === 0) { alert("Nenhum registro encontrado para este dia."); return; }
+            if(filtrados.length === 0) { alert("Nenhum registro encontrado para este dia específico."); return; }
 
-            const worksheet = XLSX.utils.json_to_sheet(filtrados);
+            // Mapeia e traduz as chaves para colunas organizadas e limpas no Excel
+            const dadosExcel = filtrados.map(item => ({
+                "Missão": item.missao,
+                "Resultado": item.resultado,
+                "Motivo Falha": item.motivo,
+                "Duração Gasta": item.tempo,
+                "Data Execução": item.data
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Registros");
-            XLSX.writeFile(workbook, `Relatorio_Mesa_${dataBusca}.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Registros Diários");
+            XLSX.writeFile(workbook, `Relatorio_Saidas_${dataBusca}.xlsx`);
         }
 
         function undo() {
             let last = storage.registros.pop();
             if(!last) return;
-            if(last.resultado === "SUCESSO") storage.sim--; else storage.nao--;
+            
+            if(last.resultado === "SUCESSO") {
+                storage.sim--;
+            } else {
+                storage.nao--;
+                let mot = last.motivo.toLowerCase();
+                if(storage[mot] > 0) storage[mot]--;
+            }
             atualizar();
         }
 
-        // Funções Admin e Easter Eggs
-        function clickAdmin() {
-            inputBuffer = "abrir"; // Atalho para facilitar
-            abrirAdmin();
-        }
+        // Configurações Ocultas e Easter Eggs mantidos
+        function clickAdmin() { abrirAdmin(); }
         function abrirAdmin() { document.getElementById('adminPanel').style.display = 'block'; }
         function fecharAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
-        function changeTitle(v) { storage.titulo = v; atualizar(); }
+        function changeTitle(v) { storage.titulo = v || "MESA - CONTROLE DE MISSÕES"; atualizar(); }
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
-        function resetarTudo() { if(confirm("APAGAR TUDO?")) { localStorage.clear(); location.reload(); } }
+        function resetarTudo() { if(confirm("DESEJA DELETAR TODA A DATABASE DO LOCALSTORAGE?")) { localStorage.clear(); location.reload(); } }
 
         document.addEventListener('keydown', (e) => {
             inputBuffer += e.key.toLowerCase();
             if(inputBuffer.endsWith("harryblocks")) abrirAdmin();
             if(inputBuffer.endsWith("67")) playMedia('67.mp4', 'video');
-            if(inputBuffer.endsWith("tttt")) { document.getElementById('soundTibas').play(); playMedia('tttt.jpg', 'image'); }
+            if(inputBuffer.endsWith("tttt")) { try { document.getElementById('soundTibas').play(); }catch(e){} playMedia('tttt.jpg', 'image'); }
             if(inputBuffer.length > 20) inputBuffer = inputBuffer.substring(1);
         });
 
@@ -249,7 +363,7 @@
             const ov = document.getElementById('mediaOverlay');
             if(type === 'video') {
                 document.getElementById('videoElement').src = file;
-                document.getElementById('videoElement').play();
+                document.getElementById('videoElement').play().catch(e=>{});
                 document.getElementById('videoElement').style.display = 'block';
                 document.getElementById('imageElement').style.display = 'none';
             } else {
@@ -259,10 +373,14 @@
             }
             ov.style.display = 'block';
         }
+        
         function fecharMedia() { 
             document.getElementById('mediaOverlay').style.display = 'none';
             document.getElementById('videoElement').pause();
-            document.getElementById('soundTibas').pause();
+            try {
+                document.getElementById('soundTibas').pause();
+                document.getElementById('soundTibas').currentTime = 0;
+            } catch(e){}
         }
 
         atualizar();
