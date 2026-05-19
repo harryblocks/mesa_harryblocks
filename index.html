@@ -105,10 +105,10 @@
         }
         #doomCloseBtn:hover { background: #cc0000; }
 
-        /* Container do iframe para rodar o site externo de forma fluida */
+        /* Container ajustado para o emulador do RetroGames */
         .doom-iframe-container { 
-            width: 800px; height: 500px; max-width: 95%; max-height: 80%;
-            border: 4px solid #444; background: #000; border-radius: 10px;
+            width: 680px; height: 520px; max-width: 95%; max-height: 80%;
+            border: 4px solid #222; background: #000; border-radius: 6px;
             overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
         .doom-iframe-container iframe {
@@ -137,7 +137,7 @@
         <div class="doom-conteudo">
             <button id="doomCloseBtn" onclick="fecharDoom()">SAIR DO JOGO [X]</button>
             <div class="doom-iframe-container">
-                <iframe id="doomFrame" src=""></iframe>
+                <iframe id="doomFrame" src="" scrolling="no" allowtransparency="true" allowfullscreen="true"></iframe>
             </div>
         </div>
     </div>
@@ -148,7 +148,7 @@
         <button onclick="undo()" style="background:#ffc107; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">↩️ DESFAZER</button>
         <button onclick="abrirDadosSaida()" style="background:#007bff; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">📝 DADOS DA SAÍDA</button>
         <button onclick="abrirDownload()" style="background:#28a745; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 BAIXAR REGISTROS</button>
-        <button onclick="abrirDoom()" style="background:#333; color:#fff; border:1px solid red; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">🕹️ JOGAR DOOM</button>
+        <button onclick="abrirDoom()" style="background:#e81123; color:#fff; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">🕹️ JOGAR DOOM</button>
     </div>
 
     <div id="badgeDados" class="status-badge">⚠️ Dados da saída: Não preenchidos</div>
@@ -451,7 +451,7 @@
             const novoRegistro = {
                 missao: storage.configAtual.missao,
                 resultado: "ERRO",
-                motivo: motifo.toUpperCase(),
+                motivo: motivo.toUpperCase(),
                 tempo: "N/A",
                 data: storage.configAtual.data
             };
@@ -621,20 +621,20 @@
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
         function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
-        // NOVA FUNÇÃO DOOM VIA IFRAME COMPATÍVEL
+        // EXECUTAR JOGO DOOM COM EMULADOR INTEGRADO E PERMISSIVO
         function abrirDoom() {
             document.getElementById('doomOverlay').style.display = 'block';
-            // Alimenta a URL do frame estável para carregar direto do dos.zone
-            document.getElementById('doomFrame').src = "https://dos.zone/doom-dec-1993/";
+            // Url direta para carregar o emulador DOSBox do Doom sem bloqueio de iframe
+            document.getElementById('doomFrame').src = "https://www.retrogames.cz/play_414-DOS.php";
         }
 
         function fecharDoom() {
             document.getElementById('doomOverlay').style.display = 'none';
-            // Limpa a URL para o som do jogo parar imediatamente ao fechar
+            // Corta a URL para matar o som do jogo e liberar memória instantaneamente
             document.getElementById('doomFrame').src = "";
         }
 
-        // CAPTURA DA PALAVRA SECRETA "DOOM" NO TECLADO
+        // SEGREDO: DIGITAR "DOOM" NO TECLADO TAMBÉM ABRE
         document.addEventListener('keydown', function(event) {
             if (event.target.tagName === "INPUT" || event.target.tagName === "SELECT") {
                 return;
