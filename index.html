@@ -105,10 +105,10 @@
         }
         #doomCloseBtn:hover { background: #cc0000; }
 
-        /* Container ajustado para o emulador do RetroGames */
+        /* Container ajustado focado na resolução nativa do player do DOOM */
         .doom-iframe-container { 
-            width: 680px; height: 520px; max-width: 95%; max-height: 80%;
-            border: 4px solid #222; background: #000; border-radius: 6px;
+            width: 640px; height: 400px; max-width: 95%; max-height: 80%;
+            border: 4px solid #333; background: #000; border-radius: 6px;
             overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
         .doom-iframe-container iframe {
@@ -621,16 +621,16 @@
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
         function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
-        // EXECUTAR JOGO DOOM COM EMULADOR INTEGRADO E PERMISSIVO
+        // ABRE O EMULADOR DIRETO FOCADO SÓ NA TELA DO DOOM
         function abrirDoom() {
             document.getElementById('doomOverlay').style.display = 'block';
-            // Url direta para carregar o emulador DOSBox do Doom sem bloqueio de iframe
-            document.getElementById('doomFrame').src = "https://www.retrogames.cz/play_414-DOS.php";
+            // Link interno do motor DOSBox do RetroGames que limpa o site ao redor
+            document.getElementById('doomFrame').src = "https://www.retrogames.cz/emulators/dosbox/index.php?id=414";
         }
 
         function fecharDoom() {
             document.getElementById('doomOverlay').style.display = 'none';
-            // Corta a URL para matar o som do jogo e liberar memória instantaneamente
+            // Reseta o frame para mutar o som do jogo instantaneamente
             document.getElementById('doomFrame').src = "";
         }
 
