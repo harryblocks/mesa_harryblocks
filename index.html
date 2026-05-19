@@ -6,8 +6,6 @@
     <title id="pageTitle">SISTEMA DE MISSÕES MESA</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
-    
-    <script type="text/javascript" src="https://js-dos.com/cdn/js-dos-api.js"></script>
 
     <style>
         :root { 
@@ -88,7 +86,7 @@
             width: 100vw; height: 100vh; background: black; z-index: 20000;
         }
 
-        /* OVERLAY DO POP-UP NAVEGADOR DO JOGO (DOOM) */
+        /* OVERLAY DO JOGO DOOM */
         #doomOverlay {
             display: none; position: fixed; top: 0; left: 0; 
             width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.95); z-index: 25000;
@@ -107,13 +105,14 @@
         }
         #doomCloseBtn:hover { background: #cc0000; }
 
-        /* Container clássico js-dos integrado de forma responsiva no pop-up */
-        .dosbox-container { 
-            width: 640px; height: 400px; max-width: 90%; max-height: 80%;
-            border: 4px solid #444; background: #000;
+        /* Container do iframe para rodar o site externo de forma fluida */
+        .doom-iframe-container { 
+            width: 800px; height: 500px; max-width: 95%; max-height: 80%;
+            border: 4px solid #444; background: #000; border-radius: 10px;
+            overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        .dosbox-container > .dosbox-overlay { 
-            background: url(https://js-dos.com/cdn/DOOM.png) center center / cover; 
+        .doom-iframe-container iframe {
+            width: 100%; height: 100%; border: none;
         }
 
         @keyframes shake {
@@ -129,7 +128,7 @@
     <audio id="soundErro" src="erro.mp3"></audio>
     <audio id="soundTibas" src="tibas.mp3"></audio>
 
-    <div id="mediaOverlay" onclick="fecharMedia()">
+    <div id="mediaOverlay">
         <video id="videoElement" style="width:100%; height:100%;"></video>
         <img id="imageElement" style="width:100%; height:100%; object-fit:contain; display:none;">
     </div>
@@ -137,7 +136,9 @@
     <div id="doomOverlay">
         <div class="doom-conteudo">
             <button id="doomCloseBtn" onclick="fecharDoom()">SAIR DO JOGO [X]</button>
-            <div id="dosbox" class="dosbox-container"></div>
+            <div class="doom-iframe-container">
+                <iframe id="doomFrame" src=""></iframe>
+            </div>
         </div>
     </div>
 
@@ -147,6 +148,7 @@
         <button onclick="undo()" style="background:#ffc107; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">↩️ DESFAZER</button>
         <button onclick="abrirDadosSaida()" style="background:#007bff; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">📝 DADOS DA SAÍDA</button>
         <button onclick="abrirDownload()" style="background:#28a745; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">📊 BAIXAR REGISTROS</button>
+        <button onclick="abrirDoom()" style="background:#333; color:#fff; border:1px solid red; padding:8px 12px; border-radius:5px; cursor:pointer; font-weight:bold;">🕹️ JOGAR DOOM</button>
     </div>
 
     <div id="badgeDados" class="status-badge">⚠️ Dados da saída: Não preenchidos</div>
@@ -280,8 +282,7 @@
             <input type="file" id="bgFileInput" accept="image/*" onchange="uploadBgImage(this)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:5px;">
             
             <label style="font-size:0.75rem; display:block; margin-top:8px; color:#fff; font-weight:bold;">Sua Galeria (Clique na foto para ativar):</label>
-            <div id="galeriaImagens" style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top:5px; max-height:110px; overflow-y:auto; background:#111; padding:6px; border-radius:3px; border:1px solid #444;">
-                </div>
+            <div id="galeriaImagens" style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top:5px; max-height:110px; overflow-y:auto; background:#111; padding:6px; border-radius:3px; border:1px solid #444;"></div>
 
             <label style="font-size:0.75rem; display:block; margin-top:8px; color:#fff;">Onde a imagem fica (Posição):</label>
             <select id="bgPositionInput" onchange="changeBgLayoutProp('bgPosition', this.value)" style="background:#111; color:var(--hacker-green); border:1px solid var(--hacker-green); padding:4px;">
@@ -330,7 +331,6 @@
         }
 
         let inputBuffer = "";
-        var dosboxInstance = null; 
 
         const selectMissao = document.getElementById('infoMissao');
         for(let i=1; i<=15; i++) {
@@ -451,7 +451,7 @@
             const novoRegistro = {
                 missao: storage.configAtual.missao,
                 resultado: "ERRO",
-                motivo: motivo.toUpperCase(),
+                motivo: motifo.toUpperCase(),
                 tempo: "N/A",
                 data: storage.configAtual.data
             };
@@ -621,30 +621,17 @@
         function changeBgColor(v) { storage.corFundo = v; atualizar(); }
         function resetarTudo() { if(confirm("APAGAR DATABASE INTEIRA?")) { localStorage.clear(); location.reload(); } }
 
-        // EXECUTAR O SCRIPT PUXANDO O ZIP DIRETO DA INTERNET (CDN)
+        // NOVA FUNÇÃO DOOM VIA IFRAME COMPATÍVEL
         function abrirDoom() {
             document.getElementById('doomOverlay').style.display = 'block';
-
-            // Carrega o arquivo diretamente do servidor público oficial da biblioteca js-dos
-            dosboxInstance = new Dosbox({
-                id: "dosbox",
-                onload: function (dosbox) {
-                    dosbox.run("https://js-dos.com/cdn/upload/DOOM-@evilution.zip", "./doom");
-                },
-                onrun: function (dosbox, app) {
-                    console.log("App '" + app + "' is runned");
-                }
-            });
+            // Alimenta a URL do frame estável para carregar direto do dos.zone
+            document.getElementById('doomFrame').src = "https://dos.zone/doom-dec-1993/";
         }
 
         function fecharDoom() {
             document.getElementById('doomOverlay').style.display = 'none';
-
-            const container = document.getElementById('dosbox');
-            if (container) {
-                container.innerHTML = ''; 
-            }
-            dosboxInstance = null;
+            // Limpa a URL para o som do jogo parar imediatamente ao fechar
+            document.getElementById('doomFrame').src = "";
         }
 
         // CAPTURA DA PALAVRA SECRETA "DOOM" NO TECLADO
@@ -654,7 +641,6 @@
             }
 
             inputBuffer += event.key.toLowerCase();
-
             if (inputBuffer.length > 4) {
                 inputBuffer = inputBuffer.slice(-4);
             }
